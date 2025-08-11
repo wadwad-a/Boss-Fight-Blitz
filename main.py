@@ -16,6 +16,7 @@ wizard_icon = pygame.transform.scale(wizard_icon, (200, 200))
 ithaca = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
 robot_background = pygame.image.load("assets/backgrounds/robot-bg.png")
 robot_background = pygame.transform.scale(robot_background, (800, 600))
+
 # hover effect
 
 menu = True
@@ -65,10 +66,19 @@ while running:
     r = random.randint(0, 255)
     g = random.randint(0, 255)
     b = random.randint(0, 255)
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-# menu create
+        if menu and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            mouse = pygame.mouse.get_pos()
+            if kraken_rect.collidepoint(mouse):
+                kraken_battle()
+            elif robot_rect.collidepoint(mouse):
+                robot_battle()
+            elif wizard_rect.collidepoint(mouse):
+                wizard_battle()
+
     if menu:
         if counter % 60 == 0:
             pygame.Surface.fill(screen, (r, g, b))
@@ -98,8 +108,10 @@ while running:
                 wizard_battle()
         else:
             screen.blit(wizard_icon, (500, 200))
+    else:
+        screen.blit(robot_background, (0, 0))
 
     pygame.display.flip()
     clock.tick(60)
-    
+
 pygame.quit()
