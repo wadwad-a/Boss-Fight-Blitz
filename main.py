@@ -95,18 +95,22 @@ laser_positions = []
 # Kraken
 
 def kraken_battle():
+    global counter
     global menu, current_battle
     menu = False
+    counter = 60
     current_battle = "kraken"
     pygame.display.flip()
 
 # Robot
 
 def robot_battle():
+    global counter
     global menu, current_battle, robot_fight_start_time, laser_group
     global blink_times_done, blinking, blink_on, laser_active, laser_show_start_time
     global blink_times_needed, blink_positions, laser_positions
     menu = False
+    counter = 60
     current_battle = "robot"
     robot_fight_start_time = time.time()
     laser_group.empty()
@@ -124,8 +128,10 @@ def robot_battle():
 # Wizard
 
 def wizard_battle():
+    global counter
     global menu, current_battle
     menu = False
+    counter = 60
     current_battle = "wizard"
     pygame.display.flip()
 
@@ -155,8 +161,10 @@ while running:
             pygame.Surface.fill(screen, (r, g, b))
             if r < 75 and g < 75:
                 screen.blit(ithaca_level.render("Level Select", True, (255, 255, 255)), (153, 25))
+                screen.blit(ithaca_player.render("Player Select", True, (255, 255, 255)), (200, 350))
             else:
                 screen.blit(ithaca_level.render("Level Select", True, (0, 0, 0)), (153, 25))
+                screen.blit(ithaca_player.render("Player Select", True, (0, 0, 0)), (200, 350))
         counter += 1
 
         # menu hover
