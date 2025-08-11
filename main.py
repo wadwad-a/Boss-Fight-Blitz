@@ -8,16 +8,52 @@ pygame.display.set_caption("Boss Fight Blitz")
 clock = pygame.time.Clock()
 
 # create assets
-
+# icons
 kraken_icon = pygame.image.load("assets/icons/KRAKEN-ICON.png")
 kraken_icon = pygame.transform.scale(kraken_icon, (200, 200))
 robot_icon = pygame.image.load("assets/icons/ROBOT-ICON.png")
 robot_icon = pygame.transform.scale(robot_icon, (200, 200))
 wizard_icon = pygame.image.load("assets/icons/WIZARD-ICON.png")
 wizard_icon = pygame.transform.scale(wizard_icon, (200, 200))
+# fonts
 ithaca = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
+# backgrounds
 robot_background = pygame.image.load("assets/backgrounds/robot-bg.png")
 robot_background = pygame.transform.scale(robot_background, (800, 600))
+# weapons
+laser = pygame.image.load("assets/weapons/laser.png")
+laser = pygame.transform.scale(laser, (50, 600))
+laser_blink = pygame.image.load("assets/weapons/blink-laser.png")
+laser_blink = pygame.transform.scale(laser_blink, (50, 600))
+
+# laser class
+class Laser(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = laser
+        self.rect = self.image.get_rect(midleft=(x, y))
+
+    def update(self):
+        pass
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface((50, 50))
+        self.image.fill((0, 255, 0))
+        self.rect = self.image.get_rect(center=(100, 300))
+        self.speed = 5
+
+    def update(self, keys):
+        if keys[pygame.K_LEFT]:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT]:
+            self.rect.x += self.speed
+        if keys[pygame.K_UP]:
+            self.rect.y -= self.speed
+        if keys[pygame.K_DOWN]:
+            self.rect.y += self.speed
+        self.rect.clamp_ip(screen.get_rect())
 
 # hover effect
 
@@ -36,6 +72,22 @@ kraken_dark = hover(kraken_icon)
 robot_dark = hover(robot_icon)
 wizard_dark = hover(wizard_icon)
 
+laser_group = pygame.sprite.Group()
+player = Player()
+robot_fight_start_time = None
+laser_cycle_time = 2
+blink_duration = 0.15
+blink_times_needed = 4
+blink_times_done = 0
+blinking = False
+blink_on = False
+last_blink_switch = 0
+laser_active = False
+laser_show_start_time = 0
+
+blink_positions = []
+laser_positions = []
+
 # BOSS FIGHTS
 
 # Kraken
@@ -49,10 +101,22 @@ def kraken_battle():
 # Robot
 
 def robot_battle():
-    global menu, current_battle
+    global menu, current_battle, robot_fight_start_time, laser_group
+    global blink_times_done, blinking, blink_on, laser_active, laser_show_start_time
+    global blink_times_needed, blink_positions, laser_positions
     menu = False
     current_battle = "robot"
-    screen.blit(robot_background, (0, 0))
+    robot_fight_start_time = time.time()
+    laser_group.empty()
+    player.rect.center = (100, 300)
+    blink_times_done = 0
+    blinking = False
+    blink_on = False
+    laser_active = False
+    laser_show_start_time = 0
+    blink_times_needed = 4
+    blink_positions = []
+    laser_positions = []
     pygame.display.flip()
 
 # Wizard
@@ -62,7 +126,6 @@ def wizard_battle():
     menu = False
     current_battle = "wizard"
     pygame.display.flip()
-
 
 # game loop
 
@@ -116,7 +179,79 @@ while running:
             screen.blit(wizard_icon, (500, 200))
     else:
         if current_battle == "robot":
-            screen.blit(robot_background, (0, 0))
+            elapsed = time.time() - robot_fight_start_time
+
+            if elapsed > 60:
+                menu = True
+                current_battle = None
+                laser_group.empty()
+            else:
+                now = time.time()
+
+                if not blinking and not laser_active and (elapsed // laser_cycle_time) > blink_times_done:
+                    blinking = True
+                    blink_on = True
+                    last_blink_switch = now
+                    blink_times_done += 1
+
+                    blink_positions = []
+                    attempts = 0
+                    max_attempts = 100
+                    count = 1
+                    if 5 <= blink_times_done <= 11:
+                        count = 2
+                    elif blink_times_done >= 12:
+                        count = 3
+                    while len(blink_positions) < count and attempts < max_attempts:
+                        x = random.randint(0, 750)
+                        if all(abs(x - px) >= 50 for px in blink_positions):
+                            blink_positions.append(x)
+                        attempts += 1
+
+                if blinking:
+                    if now - last_blink_switch > blink_duration:
+                        blink_on = not blink_on
+                        last_blink_switch = now
+                        if not blink_on:
+                            blink_times_needed -= 1
+                        if blink_times_needed <= 0:
+                            blinking = False
+                            laser_active = True
+                            laser_group.empty()
+
+                            laser_positions = blink_positions.copy()
+
+                            for x in laser_positions:
+                                new_laser = Laser(x, 300)
+                                laser_group.add(new_laser)
+
+                            laser_show_start_time = now
+                            blink_times_needed = 4
+
+                if laser_active and now - laser_show_start_time > 1:
+                    laser_active = False
+                    laser_group.empty()
+
+                laser_group.update()
+                keys = pygame.key.get_pressed()
+                player.update(keys)
+
+                screen.blit(robot_background, (0, 0))
+
+                if blinking and blink_on:
+                    for pos in blink_positions:
+                        screen.blit(laser_blink, (pos, 0))
+                elif laser_active:
+                    laser_group.draw(screen)
+
+                screen.blit(player.image, player.rect)
+
+                if laser_active:
+                    if pygame.sprite.spritecollideany(player, laser_group):
+                        menu = True
+                        current_battle = None
+                        laser_group.empty()
+
         elif current_battle == "kraken":
             screen.fill((0, 0, 128))
         elif current_battle == "wizard":
