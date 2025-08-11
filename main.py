@@ -46,7 +46,7 @@ def kraken_battle():
 def robot_battle():
     global menu
     menu = False
-    robot_background.blit(screen, (250, 250))
+    screen.blit(robot_background, (0, 0))
     pygame.display.flip()
 
 # Wizard
