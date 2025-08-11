@@ -1,4 +1,4 @@
-import pygame
+import pygame, random
 
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
@@ -50,29 +50,42 @@ def wizard_battle():
 
 # game loop
 running = True
+counter = 60
 while running:
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 # menu create
-    pygame.Surface.fill(screen, (255, 255, 0))
-    pygame.Surface.blit(screen, kraken_icon, (100, 200))
-    pygame.Surface.blit(screen, robot_icon, (300, 200))
-    pygame.Surface.blit(screen, wizard_icon, (500, 200))
-    screen.blit(ithaca.render("Level Select", True, (0, 0, 0)), (153, 75))
+    if counter % 60 == 0:
+        pygame.Surface.fill(screen, (r, g, b))
+        if r < 100 and g < 100:
+            screen.blit(ithaca.render("Level Select", True, (255, 255, 255)), (153, 75))
+        else:
+            screen.blit(ithaca.render("Level Select", True, (0, 0, 0)), (153, 75))
+    counter += 1
+    
 
 # menu hover
     mouse = pygame.mouse.get_pos()
     if kraken_rect.collidepoint(mouse):
         screen.blit(kraken_dark, (100, 200))
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            kraken_battle()
     else:
         screen.blit(kraken_icon, (100, 200))
     if robot_rect.collidepoint(mouse):
         screen.blit(robot_dark, (300, 200))
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            robot_battle()
     else:
         screen.blit(robot_icon, (300, 200))
     if wizard_rect.collidepoint(mouse):
         screen.blit(wizard_dark, (500, 200))
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            wizard_battle()
     else:
         screen.blit(wizard_icon, (500, 200))
 
