@@ -61,7 +61,7 @@ while running:
 # menu create
     if counter % 60 == 0:
         pygame.Surface.fill(screen, (r, g, b))
-        if r < 100 and g < 100:
+        if r < 75 and g < 75:
             screen.blit(ithaca.render("Level Select", True, (255, 255, 255)), (153, 75))
         else:
             screen.blit(ithaca.render("Level Select", True, (0, 0, 0)), (153, 75))
