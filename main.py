@@ -26,7 +26,7 @@ while running:
     pygame.Surface.blit(screen, robot_icon, (300, 200))
     pygame.Surface.blit(screen, wizard_icon, (500, 200))
 
-    pygame.display.flip()       # Update the window
-    clock.tick(60)              # 60 FPS
-
+    pygame.display.flip()
+    clock.tick(60)
+    
 pygame.quit()
