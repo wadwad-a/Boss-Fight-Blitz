@@ -22,6 +22,7 @@ robot_background = pygame.transform.scale(robot_background, (800, 600))
 # hover effect
 
 menu = True
+current_battle = None
 kraken_rect = kraken_icon.get_rect(topleft=(100, 200))
 robot_rect = robot_icon.get_rect(topleft=(300, 200))
 wizard_rect = wizard_icon.get_rect(topleft=(500, 200))
@@ -40,23 +41,26 @@ wizard_dark = hover(wizard_icon)
 # Kraken
 
 def kraken_battle():
-    global menu
+    global menu, current_battle
     menu = False
+    current_battle = "kraken"
     pygame.display.flip()
 
 # Robot
 
 def robot_battle():
-    global menu
+    global menu, current_battle
     menu = False
+    current_battle = "robot"
     screen.blit(robot_background, (0, 0))
     pygame.display.flip()
 
 # Wizard
 
 def wizard_battle():
-    global menu
+    global menu, current_battle
     menu = False
+    current_battle = "wizard"
     pygame.display.flip()
 
 
@@ -90,7 +94,7 @@ while running:
                 screen.blit(ithaca.render("Level Select", True, (0, 0, 0)), (153, 75))
         counter += 1
 
-    # menu hover
+        # menu hover
         mouse = pygame.mouse.get_pos()
         if kraken_rect.collidepoint(mouse):
             screen.blit(kraken_dark, (100, 200))
@@ -111,7 +115,12 @@ while running:
         else:
             screen.blit(wizard_icon, (500, 200))
     else:
-        screen.blit(robot_background, (0, 0))
+        if current_battle == "robot":
+            screen.blit(robot_background, (0, 0))
+        elif current_battle == "kraken":
+            screen.fill((0, 0, 128))
+        elif current_battle == "wizard":
+            screen.fill((128, 0, 128))
 
     pygame.display.flip()
     clock.tick(60)
