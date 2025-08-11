@@ -13,6 +13,7 @@ robot_icon = pygame.image.load("assets/ROBOT-ICON.png")
 robot_icon = pygame.transform.scale(robot_icon, (200, 200))
 wizard_icon = pygame.image.load("assets/WIZARD-ICON.png")
 wizard_icon = pygame.transform.scale(wizard_icon, (200, 200))
+ithaca = pygame.font.Font("assets/ITHACA.ttf", 32)
 
 # game loops
 running = True
@@ -25,6 +26,7 @@ while running:
     pygame.Surface.blit(screen, kraken_icon, (100, 200))
     pygame.Surface.blit(screen, robot_icon, (300, 200))
     pygame.Surface.blit(screen, wizard_icon, (500, 200))
+    screen.blit(ithaca.render("Level Select", True, (0, 0, 0)), (250, 100))
 
     pygame.display.flip()
     clock.tick(60)
