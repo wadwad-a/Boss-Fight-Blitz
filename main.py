@@ -15,6 +15,8 @@ robot_icon = pygame.image.load("assets/icons/ROBOT-ICON.png")
 robot_icon = pygame.transform.scale(robot_icon, (200, 200))
 wizard_icon = pygame.image.load("assets/icons/WIZARD-ICON.png")
 wizard_icon = pygame.transform.scale(wizard_icon, (200, 200))
+smiley_icon = pygame.image.load("assets/icons/smiley.png")
+smiley_icon = pygame.transform.scale(smiley_icon, (50, 50))
 # fonts
 ithaca = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
 # backgrounds
@@ -39,8 +41,7 @@ class Laser(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill((0, 255, 0))
+        self.image = smiley_icon
         self.rect = self.image.get_rect(center=(100, 300))
         self.speed = 5
 
