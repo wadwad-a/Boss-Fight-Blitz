@@ -81,7 +81,7 @@ wizard_rect = wizard_icon.get_rect(topleft=(500, 200))
 
 player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon]
 player_names = ["Smiley", "Cookie", "Crazy", "Heart", "Penny"]
-player_descs = ["happy yay", "yum", "what", "quite lovely", "woah i'm rich"]
+player_descs = ["default", "yum", "what", "quite lovely", "woah i'm rich"]
 icon_size = 50
 spacing = 30  # space between icons
 num_icons = len(player_icons)
@@ -200,6 +200,8 @@ while running:
                 # Check player select icons
                 for i, rect in enumerate(player_rects):
                     if rect.collidepoint(mouse):
+                        select_sound = pygame.mixer.Sound("assets/music/select.mp3")
+                        select_sound.play()
                         selected_player = i
                         player.image = player_icons[selected_player]
                         player.rect = player.image.get_rect(center=player.rect.center)
