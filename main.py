@@ -18,7 +18,8 @@ wizard_icon = pygame.transform.scale(wizard_icon, (200, 200))
 smiley_icon = pygame.image.load("assets/icons/smiley.png")
 smiley_icon = pygame.transform.scale(smiley_icon, (50, 50))
 # fonts
-ithaca = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
+ithaca_level = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
+ithaca_player = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 92)
 # backgrounds
 robot_background = pygame.image.load("assets/backgrounds/robot-bg.png")
 robot_background = pygame.transform.scale(robot_background, (800, 600))
@@ -153,31 +154,31 @@ while running:
         if counter % 60 == 0:
             pygame.Surface.fill(screen, (r, g, b))
             if r < 75 and g < 75:
-                screen.blit(ithaca.render("Level Select", True, (255, 255, 255)), (153, 75))
+                screen.blit(ithaca_level.render("Level Select", True, (255, 255, 255)), (153, 25))
             else:
-                screen.blit(ithaca.render("Level Select", True, (0, 0, 0)), (153, 75))
+                screen.blit(ithaca_level.render("Level Select", True, (0, 0, 0)), (153, 25))
         counter += 1
 
         # menu hover
         mouse = pygame.mouse.get_pos()
         if kraken_rect.collidepoint(mouse):
-            screen.blit(kraken_dark, (100, 200))
+            screen.blit(kraken_dark, (100, 150))
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 kraken_battle()
         else:
-            screen.blit(kraken_icon, (100, 200))
+            screen.blit(kraken_icon, (100, 150))
         if robot_rect.collidepoint(mouse):
-            screen.blit(robot_dark, (300, 200))
+            screen.blit(robot_dark, (300, 150))
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 robot_battle()
         else:
-            screen.blit(robot_icon, (300, 200))
+            screen.blit(robot_icon, (300, 150))
         if wizard_rect.collidepoint(mouse):
-            screen.blit(wizard_dark, (500, 200))
+            screen.blit(wizard_dark, (500, 150))
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 wizard_battle()
         else:
-            screen.blit(wizard_icon, (500, 200))
+            screen.blit(wizard_icon, (500, 150))
     else:
         if current_battle == "robot":
             elapsed = time.time() - robot_fight_start_time
