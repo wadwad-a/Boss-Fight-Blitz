@@ -7,14 +7,15 @@ clock = pygame.time.Clock()
 
 # create assets
 
-kraken_icon = pygame.image.load("assets/KRAKEN-ICON.png")
+kraken_icon = pygame.image.load("assets/icons/KRAKEN-ICON.png")
 kraken_icon = pygame.transform.scale(kraken_icon, (200, 200))
-robot_icon = pygame.image.load("assets/ROBOT-ICON.png")
+robot_icon = pygame.image.load("assets/icons/ROBOT-ICON.png")
 robot_icon = pygame.transform.scale(robot_icon, (200, 200))
-wizard_icon = pygame.image.load("assets/WIZARD-ICON.png")
+wizard_icon = pygame.image.load("assets/icons/WIZARD-ICON.png")
 wizard_icon = pygame.transform.scale(wizard_icon, (200, 200))
-ithaca = pygame.font.Font("assets/ithaca-LVB75.ttf", 128)
-
+ithaca = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
+robot_background = pygame.image.load("assets/backgrounds/robot-bg.png")
+robot_background = pygame.transform.scale(robot_background, (800, 600))
 # hover effect
 
 menu = True
@@ -45,6 +46,7 @@ def kraken_battle():
 def robot_battle():
     global menu
     menu = False
+    robot_background.blit(screen, (250, 250))
     pygame.display.flip()
 
 # Wizard
