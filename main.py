@@ -29,7 +29,7 @@ wizard_rect = wizard_icon.get_rect(topleft=(500, 200))
 
 def hover(icon):
     dark = icon.copy()
-    dark.fill((int(255 * 0.7), int(255 * 0.7), int(255 * 0.7)))
+    dark.fill((int(255 * 0.7), int(255 * 0.7), int(255 * 0.7)), special_flags=pygame.BLEND_RGB_MULT)
     return dark
 
 kraken_dark = hover(kraken_icon)
