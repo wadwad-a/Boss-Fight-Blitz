@@ -9,17 +9,29 @@ clock = pygame.time.Clock()
 
 # create assets
 # icons
+# level select
 kraken_icon = pygame.image.load("assets/icons/KRAKEN-ICON.png")
 kraken_icon = pygame.transform.scale(kraken_icon, (200, 200))
 robot_icon = pygame.image.load("assets/icons/ROBOT-ICON.png")
 robot_icon = pygame.transform.scale(robot_icon, (200, 200))
 wizard_icon = pygame.image.load("assets/icons/WIZARD-ICON.png")
 wizard_icon = pygame.transform.scale(wizard_icon, (200, 200))
+# player select
 smiley_icon = pygame.image.load("assets/icons/smiley.png")
 smiley_icon = pygame.transform.scale(smiley_icon, (50, 50))
+cookie_icon = pygame.image.load("assets/icons/cookie.png")
+cookie_icon = pygame.transform.scale(cookie_icon, (50, 50))
+crazy_icon = pygame.image.load("assets/icons/crazy.png")
+crazy_icon = pygame.transform.scale(crazy_icon, (50, 50))
+heart_icon = pygame.image.load("assets/icons/heart.png")
+heart_icon = pygame.transform.scale(heart_icon, (50, 50))
+penny_icon = pygame.image.load("assets/icons/penny.png")
+penny_icon = pygame.transform.scale(penny_icon, (50, 50))
 # fonts
 ithaca_level = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
 ithaca_player = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 92)
+ithaca_hover = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 30)
+ithaca_desc = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 20)
 # backgrounds
 robot_background = pygame.image.load("assets/backgrounds/robot-bg.png")
 robot_background = pygame.transform.scale(robot_background, (800, 600))
@@ -40,9 +52,9 @@ class Laser(pygame.sprite.Sprite):
         pass
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, image):
         super().__init__()
-        self.image = smiley_icon
+        self.image = image
         self.rect = self.image.get_rect(center=(100, 300))
         self.speed = 5
 
@@ -65,6 +77,20 @@ kraken_rect = kraken_icon.get_rect(topleft=(100, 200))
 robot_rect = robot_icon.get_rect(topleft=(300, 200))
 wizard_rect = wizard_icon.get_rect(topleft=(500, 200))
 
+player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon]
+player_names = ["Smiley", "Cookie", "Crazy", "Heart", "Penny"]
+player_descs = ["happy yay", "yum", "what", "quite lovely", "woah i'm rich"]
+icon_size = 50
+spacing = 30  # space between icons
+num_icons = len(player_icons)
+total_width = num_icons * icon_size + (num_icons - 1) * spacing
+start_x = (800 - total_width) // 2  # 800 is the screen width
+
+player_rects = []
+for i in range(num_icons):
+    x = start_x + i * (icon_size + spacing)
+    player_rects.append(player_icons[i].get_rect(topleft=(x, 420)))
+
 def hover(icon):
     dark = icon.copy()
     dark.fill((int(255 * 0.7), int(255 * 0.7), int(255 * 0.7)), special_flags=pygame.BLEND_RGB_MULT)
@@ -75,7 +101,9 @@ robot_dark = hover(robot_icon)
 wizard_dark = hover(wizard_icon)
 
 laser_group = pygame.sprite.Group()
-player = Player()
+
+selected_player = 0
+player = Player(player_icons[selected_player])
 robot_fight_start_time = None
 laser_cycle_time = 2
 blink_duration = 0.15
@@ -140,9 +168,6 @@ def wizard_battle():
 running = True
 counter = 60
 while running:
-    r = random.randint(0, 255)
-    g = random.randint(0, 255)
-    b = random.randint(0, 255)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -155,20 +180,39 @@ while running:
                 robot_battle()
             elif wizard_rect.collidepoint(mouse):
                 wizard_battle()
+            else:
+                # Check player select icons
+                for i, rect in enumerate(player_rects):
+                    if rect.collidepoint(mouse):
+                        selected_player = i
+                        player.image = player_icons[selected_player]
+                        player.rect = player.image.get_rect(center=player.rect.center)
+                        break
 
     if menu:
         if counter % 60 == 0:
-            pygame.Surface.fill(screen, (r, g, b))
-            if r < 75 and g < 75:
-                screen.blit(ithaca_level.render("Level Select", True, (255, 255, 255)), (153, 25))
-                screen.blit(ithaca_player.render("Player Select", True, (255, 255, 255)), (200, 350))
-            else:
-                screen.blit(ithaca_level.render("Level Select", True, (0, 0, 0)), (153, 25))
-                screen.blit(ithaca_player.render("Player Select", True, (0, 0, 0)), (200, 350))
+            r = random.randint(0, 255)
+            g = random.randint(0, 255)
+            b = random.randint(0, 255)
+
+        screen.fill((r, g, b))
+
+        if r < 75 and g < 75:
+            level_text = ithaca_level.render("Level Select", True, (255, 255, 255))
+            player_text = ithaca_player.render("Player Select", True, (255, 255, 255))
+        else:
+            level_text = ithaca_level.render("Level Select", True, (0, 0, 0))
+            player_text = ithaca_player.render("Player Select", True, (0, 0, 0))
+
+        screen.blit(level_text, (153, 25))
+        screen.blit(player_text, (200, 320))
+
         counter += 1
 
         # menu hover
         mouse = pygame.mouse.get_pos()
+
+        # Level select icons and hover
         if kraken_rect.collidepoint(mouse):
             screen.blit(kraken_dark, (100, 150))
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -187,6 +231,32 @@ while running:
                 wizard_battle()
         else:
             screen.blit(wizard_icon, (500, 150))
+
+        # Player select icons
+        for i, icon in enumerate(player_icons):
+            pos = player_rects[i].topleft
+            if i == selected_player:
+                pygame.draw.rect(screen, (100, 100, 100), (*pos, 50, 50))
+            screen.blit(icon, pos)
+
+        # Show hovered player name and description
+        hovered_index = None
+        for i, rect in enumerate(player_rects):
+            if rect.collidepoint(mouse):
+                hovered_index = i
+                break
+        if hovered_index is not None:
+            # clear text area before drawing text to avoid overlap
+            text_area_rect = pygame.Rect(0, 500, 800, 80)
+            screen.fill((r, g, b), text_area_rect)
+            color = (255, 255, 255) if r < 75 and g < 75 else (0, 0, 0)
+            name_surf = ithaca_hover.render(player_names[hovered_index], True, color)
+            desc_surf = ithaca_desc.render(player_descs[hovered_index], True, color)
+            name_rect = name_surf.get_rect(center=(400, 510))
+            desc_rect = desc_surf.get_rect(center=(400, 545))
+            screen.blit(name_surf, name_rect)
+            screen.blit(desc_surf, desc_rect)
+
     else:
         if current_battle == "robot":
             elapsed = time.time() - robot_fight_start_time
