@@ -125,9 +125,13 @@ laser_positions = []
 # Kraken
 
 def kraken_battle():
-    global counter
+    global counter, boss, lobby
     global menu, current_battle
+    pygame.mixer.music.stop()
+    pygame.mixer.music.unload()
     menu = False
+    boss = True
+    lobby = False
     counter = 60
     current_battle = "kraken"
     pygame.display.flip()
@@ -135,13 +139,17 @@ def kraken_battle():
 # Robot
 
 def robot_battle():
-    global counter
+    global counter, boss, lobby
     global menu, current_battle, robot_fight_start_time, laser_group
     global blink_times_done, blinking, blink_on, laser_active, laser_show_start_time
     global blink_times_needed, blink_positions, laser_positions
+    pygame.mixer.music.stop()
+    pygame.mixer.music.unload()
     pygame.mixer.music.load("assets/music/cyberblade.mp3")
     pygame.mixer.music.play()
     menu = False
+    boss = True
+    lobby = False
     counter = 60
     current_battle = "robot"
     robot_fight_start_time = time.time()
@@ -160,15 +168,20 @@ def robot_battle():
 # Wizard
 
 def wizard_battle():
-    global counter
+    global counter, boss, lobby
     global menu, current_battle
+    pygame.mixer.music.stop()
+    pygame.mixer.music.unload()
     menu = False
+    boss = True
+    lobby = False
     counter = 60
     current_battle = "wizard"
     pygame.display.flip()
 
 # game loop
-
+boss = False
+lobby = False
 running = True
 counter = 60
 while running:
@@ -193,8 +206,14 @@ while running:
                         break
 
     if menu:
-        pygame.mixer.music.stop()
-        pygame.mixer.music.unload()
+        if boss:
+            pygame.mixer.music.stop()
+            pygame.mixer.music.unload()
+            boss = False
+        if not lobby:
+            pygame.mixer.music.load("assets/music/miffy_cafe.mp3")
+            pygame.mixer.music.play(loops=-1)
+        lobby = True
         if counter % 60 == 0:
             r = random.randint(0, 255)
             g = random.randint(0, 255)
