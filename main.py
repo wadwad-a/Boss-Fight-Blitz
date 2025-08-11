@@ -32,6 +32,8 @@ ithaca_level = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
 ithaca_player = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 92)
 ithaca_hover = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 30)
 ithaca_desc = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 20)
+# music
+cyberblade = pygame.mixer.music.load("assets/music/cyberblade.mp3")
 # backgrounds
 robot_background = pygame.image.load("assets/backgrounds/robot-bg.png")
 robot_background = pygame.transform.scale(robot_background, (800, 600))
@@ -137,6 +139,8 @@ def robot_battle():
     global menu, current_battle, robot_fight_start_time, laser_group
     global blink_times_done, blinking, blink_on, laser_active, laser_show_start_time
     global blink_times_needed, blink_positions, laser_positions
+    pygame.mixer.music.load("assets/music/cyberblade.mp3")
+    pygame.mixer.music.play()
     menu = False
     counter = 60
     current_battle = "robot"
@@ -168,7 +172,6 @@ def wizard_battle():
 running = True
 counter = 60
 while running:
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -190,6 +193,8 @@ while running:
                         break
 
     if menu:
+        pygame.mixer.music.stop()
+        pygame.mixer.music.unload()
         if counter % 60 == 0:
             r = random.randint(0, 255)
             g = random.randint(0, 255)
@@ -261,7 +266,7 @@ while running:
         if current_battle == "robot":
             elapsed = time.time() - robot_fight_start_time
 
-            if elapsed > 60:
+            if elapsed > 51:
                 menu = True
                 current_battle = None
                 laser_group.empty()
