@@ -1,5 +1,5 @@
 # imports
-import pygame, random, time
+import pygame, random, time, math
 
 # initialize pygame
 pygame.init()
@@ -44,8 +44,8 @@ laser = pygame.image.load("assets/weapons/laser.png")
 laser = pygame.transform.scale(laser, (50, 600))
 laser_blink = pygame.image.load("assets/weapons/blink-laser.png")
 laser_blink = pygame.transform.scale(laser_blink, (50, 600))
-wand = pygame.image.load("assets/weapons/wand.png")
-wand = pygame.transform.scale(wand, (25, 150))
+wand_img = pygame.image.load("assets/weapons/wand.png").convert_alpha()
+wand_img = pygame.transform.scale(wand_img, (25, 150))
 
 # laser class
 class Laser(pygame.sprite.Sprite):
@@ -124,6 +124,56 @@ laser_show_start_time = 0
 blink_positions = []
 laser_positions = []
 
+# WAND AND PROJECTILE CLASSES FOR WIZARD FIGHT
+
+class Wand(pygame.sprite.Sprite):
+    def __init__(self, x, y, angle, side):
+        super().__init__()
+        self.original_image = wand_img
+        self.image = pygame.transform.rotate(self.original_image, -angle)
+        self.rect = self.image.get_rect()
+        self.angle = angle
+        self.spawn_time = time.time()
+        self.has_fired = False
+        self.side = side
+
+        # Position wand partially embedded offscreen based on side
+        if side == "left":
+            self.rect.center = (-self.rect.width // 2, y)
+        elif side == "right":
+            self.rect.center = (800 + self.rect.width // 2, y)
+        elif side == "top":
+            self.rect.center = (x, -self.rect.height // 2)
+        elif side == "bottom":
+            self.rect.center = (x, 600 + self.rect.height // 2)
+
+
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self, x, y, angle):
+        super().__init__()
+        length = 800
+        width = 20
+        self.original_image = pygame.Surface((length, width), pygame.SRCALPHA)
+        pygame.draw.rect(self.original_image, (255, 255, 0), self.original_image.get_rect())
+        self.image = pygame.transform.rotate(self.original_image, -angle)
+        self.rect = self.image.get_rect(center=(x, y))
+        self.angle = angle
+        self.speed = 20
+        self.spawn_time = time.time()
+
+    def update(self):
+        dx = self.speed * math.cos(math.radians(self.angle))
+        dy = self.speed * math.sin(math.radians(self.angle))
+        self.rect.x += dx
+        self.rect.y += dy
+
+        # Remove projectile if it goes offscreen
+        if (self.rect.right < 0 or self.rect.left > 800 or
+            self.rect.bottom < 0 or self.rect.top > 600):
+            self.kill()
+
+    def can_collide(self):
+        return (time.time() - self.spawn_time) > 0.15
 # BOSS FIGHTS
 
 # Kraken
@@ -176,6 +226,7 @@ def robot_battle():
 def wizard_battle():
     global counter, boss, lobby
     global menu, current_battle
+    global wizard_fight_start_time, wizard_wands, wizard_projectiles, wizard_wand_phase, last_wand_spawn_time
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
     pygame.mixer.music.load("assets/music/cyberblade.mp3")
@@ -185,13 +236,27 @@ def wizard_battle():
     lobby = False
     counter = 60
     current_battle = "wizard"
+    wizard_fight_start_time = time.time()
+    wizard_wands = pygame.sprite.Group()
+    wizard_projectiles = pygame.sprite.Group()
+    wizard_wand_phase = 0
+    last_wand_spawn_time = 0
+    player.rect.center = (100, 300)  # Reset player position
     pygame.display.flip()
+
+# Initialize wizard groups and variables
+wizard_wands = pygame.sprite.Group()
+wizard_projectiles = pygame.sprite.Group()
+wizard_wand_phase = 0
+wizard_wand_timer = 0
+wizard_fight_start_time = None
 
 # game loop
 boss = False
 lobby = False
 running = True
 counter = 60
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -371,12 +436,97 @@ while running:
             #if elapsed > 57:
                 #menu = True
                 #current_battle = None
+
         elif current_battle == "wizard":
-            screen.fill((128, 0, 128))
-            #elapsed = time.time() - wizard_fight_start_time
-            #if elapsed > 65:
-               # menu = True
-               # current_battle = None
+            elapsed = time.time() - wizard_fight_start_time
+            now = time.time()
+
+            if elapsed > 65:
+                menu = True
+                current_battle = None
+                wizard_wands.empty()
+                wizard_projectiles.empty()
+            else:
+                # Spawn new wands every 3 seconds only if no projectiles on screen
+                if now - last_wand_spawn_time > 3 and len(wizard_projectiles) == 0:
+                    wizard_wands.empty()  # Remove old wands before spawning new ones
+                    wizard_wand_phase += 1
+                    if wizard_wand_phase > 14:
+                        wizard_wand_phase = 1  # Loop phases
+
+                    # Determine count of wands
+                    if 1 <= wizard_wand_phase <= 4:
+                        count = 1
+                    elif 5 <= wizard_wand_phase <= 11:
+                        count = 2
+                    else:
+                        count = 3
+
+                    sides = ["bottom", "left", "top", "right"]
+                    for _ in range(count):
+                        side = random.choice(sides)
+                        if side == "bottom":
+                            x = random.randint(0, 800)
+                            y = 600
+                            angle = random.uniform(-75, 75)
+                        elif side == "left":
+                            x = 0
+                            y = random.randint(0, 600)
+                            angle = random.uniform(15, 165)
+                        elif side == "top":
+                            x = random.randint(0, 800)
+                            y = 0
+                            angle = random.uniform(105, 255)
+                        else:  # right
+                            x = 800
+                            y = random.randint(0, 600)
+                            angle = random.uniform(195, 345)
+
+                        wand_sprite = Wand(x, y, angle, side)
+                        wizard_wands.add(wand_sprite)
+
+                    last_wand_spawn_time = now
+
+                # Fire projectiles after 1 second
+                for wand_sprite in wizard_wands:
+                    if not wand_sprite.has_fired and now - wand_sprite.spawn_time > 1:
+                        # Calculate wand tip position for projectile spawn
+                        length = wand_sprite.rect.height  # length of wand image approx 150
+                        tip_x = wand_sprite.rect.centerx + length * math.cos(math.radians(wand_sprite.angle))
+                        tip_y = wand_sprite.rect.centery + length * math.sin(math.radians(wand_sprite.angle))
+
+                        projectile = Projectile(tip_x, tip_y, wand_sprite.angle)
+                        wizard_projectiles.add(projectile)
+                        wand_sprite.has_fired = True
+
+                wizard_wands.update()
+                wizard_projectiles.update()
+
+                screen.blit(wizard_background, (0, 0))
+
+                for wand_sprite in wizard_wands:
+                    screen.blit(wand_sprite.image, wand_sprite.rect)
+
+                for proj in wizard_projectiles:
+                    screen.blit(proj.image, proj.rect)
+
+                keys = pygame.key.get_pressed()
+                player.update(keys)
+                screen.blit(player.image, player.rect)
+
+                if pygame.sprite.spritecollideany(player, wizard_wands):
+                    menu = True
+                    current_battle = None
+                    wizard_wands.empty()
+                    wizard_projectiles.empty()
+
+                for proj in wizard_projectiles:
+                    if proj.can_collide() and proj.rect.colliderect(player.rect):
+                        menu = True
+                        current_battle = None
+                        wizard_wands.empty()
+                        wizard_projectiles.empty()
+                        break
 
     pygame.display.flip()
     clock.tick(60)
