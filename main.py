@@ -127,25 +127,31 @@ laser_positions = []
 # WAND AND PROJECTILE CLASSES FOR WIZARD FIGHT
 
 class Wand(pygame.sprite.Sprite):
-    def __init__(self, x, y, angle, side):
+    def __init__(self, pivot_pos, angle, side):
         super().__init__()
         self.original_image = wand_img
-        self.image = pygame.transform.rotate(self.original_image, -angle)
-        self.rect = self.image.get_rect()
         self.angle = angle
+        self.pivot = pygame.math.Vector2(pivot_pos)
+        self.offset = pygame.math.Vector2(0, -self.original_image.get_height() / 2)
+        self.image, self.rect = self.rotate()
         self.spawn_time = time.time()
         self.has_fired = False
         self.side = side
 
-        # Position wand partially embedded offscreen based on side
-        if side == "left":
-            self.rect.center = (-self.rect.width // 2, y)
-        elif side == "right":
-            self.rect.center = (800 + self.rect.width // 2, y)
-        elif side == "top":
-            self.rect.center = (x, -self.rect.height // 2)
-        elif side == "bottom":
-            self.rect.center = (x, 600 + self.rect.height // 2)
+    def rotate(self):
+        # Pygame rotation is counter-clockwise but we have to negate angle to rotate clockwise
+        rotated_image = pygame.transform.rotate(self.original_image, -self.angle)
+        
+        # Offset is from pivot to center of wand image (assuming wand points up)
+        rotated_offset = self.offset.   rotate(-self.angle)
+        
+        # New rect centered at pivot + rotated offset
+        rect = rotated_image.get_rect(center=self.pivot + rotated_offset)
+        
+        return rotated_image, rect
+
+    def update(self):
+        pass
 
 
 class Projectile(pygame.sprite.Sprite):
@@ -155,24 +161,33 @@ class Projectile(pygame.sprite.Sprite):
         width = 20
         self.original_image = pygame.Surface((length, width), pygame.SRCALPHA)
         pygame.draw.rect(self.original_image, (255, 255, 0), self.original_image.get_rect())
-        self.image = pygame.transform.rotate(self.original_image, -angle)
+        self.image = pygame.transform.rotate(self.original_image, angle - 90)  # your fix to face direction
         self.rect = self.image.get_rect(center=(x, y))
         self.angle = angle
         self.speed = 20
         self.spawn_time = time.time()
 
+        # Store precise positions for smooth movement
+        self.pos_x = float(x)
+        self.pos_y = float(y)
+
     def update(self):
         dx = self.speed * math.cos(math.radians(self.angle))
         dy = self.speed * math.sin(math.radians(self.angle))
-        self.rect.x += dx
-        self.rect.y += dy
 
-        # Remove projectile if it goes offscreen
+        self.pos_x += dx
+        self.pos_y += dy
+
+        self.rect.centerx = int(self.pos_x)
+        self.rect.centery = int(self.pos_y)
+
+        # Remove projectile if offscreen
         if (self.rect.right < 0 or self.rect.left > 800 or
             self.rect.bottom < 0 or self.rect.top > 600):
             self.kill()
 
     def can_collide(self):
+        # Only allow collisions 0.15s after spawn (to avoid immediate self-hit)
         return (time.time() - self.spawn_time) > 0.15
 # BOSS FIGHTS
 
@@ -454,7 +469,7 @@ while running:
                     if wizard_wand_phase > 14:
                         wizard_wand_phase = 1  # Loop phases
 
-                    # Determine count of wands
+                    # Determine count of wands based on phase
                     if 1 <= wizard_wand_phase <= 4:
                         count = 1
                     elif 5 <= wizard_wand_phase <= 11:
@@ -462,40 +477,62 @@ while running:
                     else:
                         count = 3
 
+                    offset = 10
+                    wand_length = wand_img.get_height()  # 150 as per your image
+
                     sides = ["bottom", "left", "top", "right"]
                     for _ in range(count):
                         side = random.choice(sides)
+
                         if side == "bottom":
-                            x = random.randint(0, 800)
-                            y = 600
+                            # X inside screen leaving room for wand length on sides
+                            pivot_x = random.randint(int(wand_length / 2), 800 - int(wand_length / 2))
+                            pivot_y = 600 - offset
                             angle = random.uniform(-75, 75)
                         elif side == "left":
-                            x = 0
-                            y = random.randint(0, 600)
+                            pivot_x = offset
+                            pivot_y = random.randint(int(wand_length / 2), 600 - int(wand_length / 2))
                             angle = random.uniform(15, 165)
                         elif side == "top":
-                            x = random.randint(0, 800)
-                            y = 0
+                            pivot_x = random.randint(int(wand_length / 2), 800 - int(wand_length / 2))
+                            pivot_y = offset
                             angle = random.uniform(105, 255)
                         else:  # right
-                            x = 800
-                            y = random.randint(0, 600)
+                            pivot_x = 800 - offset
+                            pivot_y = random.randint(int(wand_length / 2), 600 - int(wand_length / 2))
                             angle = random.uniform(195, 345)
 
-                        wand_sprite = Wand(x, y, angle, side)
+                        wand_sprite = Wand((pivot_x, pivot_y), angle, side)
                         wizard_wands.add(wand_sprite)
 
                     last_wand_spawn_time = now
 
-                # Fire projectiles after 1 second
+                # Fire projectiles after 1 second from wand spawn
+                wand_length = 150  # fixed length of wand image before rotation
                 for wand_sprite in wizard_wands:
                     if not wand_sprite.has_fired and now - wand_sprite.spawn_time > 1:
-                        # Calculate wand tip position for projectile spawn
-                        length = wand_sprite.rect.height  # length of wand image approx 150
-                        tip_x = wand_sprite.rect.centerx + length * math.cos(math.radians(wand_sprite.angle))
-                        tip_y = wand_sprite.rect.centery + length * math.sin(math.radians(wand_sprite.angle))
-
-                        projectile = Projectile(tip_x, tip_y, wand_sprite.angle)
+                        wand_length = wand_sprite.original_image.get_height()
+                        
+                        # Vector pointing from pivot to tip (wand points upward initially)
+                        local_tip = pygame.math.Vector2(0, -wand_length / 2)
+                        
+                        # Rotate tip vector by wand angle (clockwise rotation)
+                        rotated_tip = local_tip.rotate(-wand_sprite.angle)
+                        
+                        # Global position of wand tip
+                        tip_pos = wand_sprite.pivot + rotated_tip
+                        
+                        # Spawn projectile slightly behind tip, along wand axis
+                        back_offset = 20
+                        angle_rad = math.radians(wand_sprite.angle)
+                        
+                        # Direction vector of wand (pointing toward tip)
+                        wand_dir = pygame.math.Vector2(math.cos(angle_rad), math.sin(angle_rad))
+                        
+                        # Spawn point = tip_pos - back_offset * wand_dir
+                        spawn_pos = tip_pos - wand_dir * back_offset
+                        
+                        projectile = Projectile(spawn_pos.x, spawn_pos.y, wand_sprite.angle)
                         wizard_projectiles.add(projectile)
                         wand_sprite.has_fired = True
 
@@ -514,12 +551,14 @@ while running:
                 player.update(keys)
                 screen.blit(player.image, player.rect)
 
+                # Collision with wands ends the battle
                 if pygame.sprite.spritecollideany(player, wizard_wands):
                     menu = True
                     current_battle = None
                     wizard_wands.empty()
                     wizard_projectiles.empty()
 
+                # Collision with projectiles (only after 0.15s) ends battle
                 for proj in wizard_projectiles:
                     if proj.can_collide() and proj.rect.colliderect(player.rect):
                         menu = True
@@ -527,6 +566,7 @@ while running:
                         wizard_wands.empty()
                         wizard_projectiles.empty()
                         break
+
 
     pygame.display.flip()
     clock.tick(60)
