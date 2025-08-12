@@ -39,8 +39,10 @@ robot_background_1 = pygame.image.load("assets/backgrounds/robot-bg-1.png")
 robot_background_1 = pygame.transform.scale(robot_background_1, (800, 600))
 robot_background_2 = pygame.image.load("assets/backgrounds/robot-bg-2.png")
 robot_background_2 = pygame.transform.scale(robot_background_2, (800, 600))
-wizard_background = pygame.image.load("assets/backgrounds/wizard-bg.png")
-wizard_background = pygame.transform.scale(wizard_background, (800, 600))
+wizard_background_1 = pygame.image.load("assets/backgrounds/wizard-bg-1.png")
+wizard_background_1 = pygame.transform.scale(wizard_background_1, (800, 600))
+wizard_background_2 = pygame.image.load("assets/backgrounds/wizard-bg-2.png")
+wizard_background_2 = pygame.transform.scale(wizard_background_2, (800, 600))
 # weapons
 laser = pygame.image.load("assets/weapons/laser.png")
 laser = pygame.transform.scale(laser, (50, 600))
@@ -245,7 +247,7 @@ def robot_battle():
 # Wizard
 
 def wizard_battle():
-    global counter, boss, lobby
+    global counter, boss, lobby, wizcount
     global menu, current_battle
     global wizard_fight_start_time, wizard_wands, wizard_projectiles, wizard_wand_phase, last_wand_spawn_time
     pygame.mixer.music.stop()
@@ -256,6 +258,7 @@ def wizard_battle():
     boss = True
     lobby = False
     counter = 60
+    wizcount = 0
     current_battle = "wizard"
     wizard_fight_start_time = time.time()
     wizard_wands = pygame.sprite.Group()
@@ -462,6 +465,7 @@ while running:
                 #current_battle = None
 
         elif current_battle == "wizard":
+            wizcount += 0.05
             elapsed = time.time() - wizard_fight_start_time
             now = time.time()
 
@@ -548,7 +552,10 @@ while running:
                 wizard_wands.update()
                 wizard_projectiles.update()
 
-                screen.blit(wizard_background, (0, 0))
+                if wizcount % 2 >= 0 and wizcount % 2 < 1:
+                    screen.blit(wizard_background_2, (0, 0))
+                else:
+                    screen.blit(wizard_background_1, (0, 0))
 
                 for proj in wizard_projectiles:
                     screen.blit(proj.image, proj.rect)
