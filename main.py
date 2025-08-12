@@ -145,8 +145,8 @@ def robot_battle():
     global blink_times_needed, blink_positions, laser_positions
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
-    pygame.mixer.music.load("assets/music/cyberblade.mp3")
-    pygame.mixer.music.play()
+    pygame.mixer.music.load("assets/music/marcheur.mp3")
+    pygame.mixer.music.play(start=89)
     menu = False
     boss = True
     lobby = False
@@ -172,6 +172,8 @@ def wizard_battle():
     global menu, current_battle
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
+    pygame.mixer.music.load("assets/music/cyberblade.mp3")
+    pygame.mixer.music.play()
     menu = False
     boss = True
     lobby = False
@@ -287,7 +289,7 @@ while running:
         if current_battle == "robot":
             elapsed = time.time() - robot_fight_start_time
 
-            if elapsed > 51:
+            if elapsed > 65:
                 menu = True
                 current_battle = None
                 laser_group.empty()
@@ -360,6 +362,10 @@ while running:
 
         elif current_battle == "kraken":
             screen.fill((0, 0, 128))
+            elapsed = time.time() - wizard_fight_start_time
+            if elapsed > 65:
+                menu = True
+                current_battle = None
         elif current_battle == "wizard":
             screen.fill((128, 0, 128))
 
