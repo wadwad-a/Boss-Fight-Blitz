@@ -359,7 +359,8 @@ while running:
         for i, icon in enumerate(player_icons):
             pos = player_rects[i].topleft
             if i == selected_player:
-                pygame.draw.rect(screen, (100, 100, 100), (*pos, 50, 50))
+                center = (pos[0] + 25, pos[1] + 25)
+                pygame.draw.circle(screen, (255-r, 255-g, 255-b), center, 35)
             screen.blit(icon, pos)
 
         # Show hovered player name and description
@@ -385,7 +386,7 @@ while running:
             robocount += 0.05
             elapsed = time.time() - robot_fight_start_time
 
-            if elapsed > 65:
+            if elapsed > 63:
                 menu = True
                 current_battle = None
                 laser_group.empty()
@@ -479,7 +480,7 @@ while running:
                 if now - last_wand_spawn_time > 3 and len(wizard_projectiles) == 0:
                     wizard_wands.empty()  # Remove old wands before spawning new ones
                     wizard_wand_phase += 1
-                    if wizard_wand_phase > 14:
+                    if wizard_wand_phase > 17:
                         wizard_wand_phase = 1  # Loop phases
 
                     # Determine count of wands based on phase
