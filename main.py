@@ -35,8 +35,10 @@ ithaca_desc = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 20)
 # music
 cyberblade = pygame.mixer.music.load("assets/music/cyberblade.mp3")
 # backgrounds
-robot_background = pygame.image.load("assets/backgrounds/robot-bg.png")
-robot_background = pygame.transform.scale(robot_background, (800, 600))
+robot_background_1 = pygame.image.load("assets/backgrounds/robot-bg-1.png")
+robot_background_1 = pygame.transform.scale(robot_background_1, (800, 600))
+robot_background_2 = pygame.image.load("assets/backgrounds/robot-bg-2.png")
+robot_background_2 = pygame.transform.scale(robot_background_2, (800, 600))
 wizard_background = pygame.image.load("assets/backgrounds/wizard-bg.png")
 wizard_background = pygame.transform.scale(wizard_background, (800, 600))
 # weapons
@@ -213,7 +215,7 @@ def kraken_battle():
 # Robot
 
 def robot_battle():
-    global counter, boss, lobby
+    global counter, boss, lobby, robocount
     global menu, current_battle, robot_fight_start_time, laser_group
     global blink_times_done, blinking, blink_on, laser_active, laser_show_start_time
     global blink_times_needed, blink_positions, laser_positions
@@ -225,6 +227,7 @@ def robot_battle():
     boss = True
     lobby = False
     counter = 60
+    robocount = 0
     current_battle = "robot"
     robot_fight_start_time = time.time()
     laser_group.empty()
@@ -376,6 +379,7 @@ while running:
 
     else:
         if current_battle == "robot":
+            robocount += 0.05
             elapsed = time.time() - robot_fight_start_time
 
             if elapsed > 65:
@@ -432,8 +436,10 @@ while running:
                 laser_group.update()
                 keys = pygame.key.get_pressed()
                 player.update(keys)
-
-                screen.blit(robot_background, (0, 0))
+                if robocount % 2 >= 0 and robocount % 2 < 1:
+                    screen.blit(robot_background_2, (0, 0))
+                else:
+                    screen.blit(robot_background_1, (0, 0))
 
                 if blinking and blink_on:
                     for pos in blink_positions:
