@@ -295,6 +295,7 @@ boss = False
 lobby = False
 running = True
 counter = 60
+text_die = ""
 
 while running:
     for event in pygame.event.get():
@@ -412,6 +413,9 @@ while running:
             text_surf = ithaca_player.render(text_str, True, text_color)
             text_rect = text_surf.get_rect(center=(400, 300))
             screen.blit(text_surf, text_rect)
+            text_desc = ithaca_hover.render(text_die, True, text_color)
+            text_rect1 = text_desc.get_rect(center=(400, 400))
+            screen.blit(text_desc, text_rect1)
     else:
         if current_battle == "robot":
             robocount += 0.05
@@ -528,6 +532,9 @@ while running:
                         show_death_popup = True
                         show_win_popup = False
                         laser_group.empty()
+                        laserChoice = ["very hot Laser", "inconsiderate Laser", "powerful Light Source"]
+                        laserChoice2 = ["bullied", "fried", "cooked", "deep-fried", "ended", "scalded", "obliterated"]
+                        text_die = f"Player was {random.choice(laserChoice2)} by {random.choice(laserChoice)}."
 
         elif current_battle == "kraken":
             screen.fill((0, 0, 128))
@@ -663,6 +670,8 @@ while running:
                     show_win_popup = False
                     wizard_wands.empty()
                     wizard_projectiles.empty()
+                    wandChoice = ["smacked", "bopped", "whacked", "bonked", "knocked out", "hit", "slapped", "dinked"]
+                    text_die = f"Player was {random.choice(wandChoice)} by Wand."
 
                 # Collision with projectiles (only after 0.15s) ends battle
                 for proj in wizard_projectiles:
@@ -673,6 +682,15 @@ while running:
                         show_win_popup = False
                         wizard_wands.empty()
                         wizard_projectiles.empty()
+                        magicText = ["Table", "Chair", "Week-old Sandwich", "Swimming Pool","Boat", "Cheeseburger", "Water Bottle", "Abandoned Shopping Cart"]
+                        chickenchance = random.randint(1, 50)
+                        if chickenchance == 23:
+                            randomText = "Flaming Chicken"
+                            pygame.mixer.Sound("assets/music/chicken.mp3").play()
+                        else:
+                            randomText = random.choice(magicText)
+                        transformText = ["was magically transformed into", "was turned into", "somehow became"]
+                        text_die = f"Player {random.choice(transformText)} {randomText}."
                         break
 
 
