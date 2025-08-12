@@ -129,6 +129,8 @@ def kraken_battle():
     global menu, current_battle
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
+    pygame.mixer.music.load("assets/music/stormcall.mp3")
+    pygame.mixer.music.play(start=45)
     menu = False
     boss = True
     lobby = False
@@ -362,12 +364,15 @@ while running:
 
         elif current_battle == "kraken":
             screen.fill((0, 0, 128))
-            elapsed = time.time() - wizard_fight_start_time
-            if elapsed > 65:
-                menu = True
-                current_battle = None
+            #if elapsed > 57:
+                #menu = True
+                #current_battle = None
         elif current_battle == "wizard":
             screen.fill((128, 0, 128))
+            #elapsed = time.time() - wizard_fight_start_time
+            #if elapsed > 65:
+               # menu = True
+               # current_battle = None
 
     pygame.display.flip()
     clock.tick(60)
