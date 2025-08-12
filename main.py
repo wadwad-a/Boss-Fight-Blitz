@@ -37,11 +37,15 @@ cyberblade = pygame.mixer.music.load("assets/music/cyberblade.mp3")
 # backgrounds
 robot_background = pygame.image.load("assets/backgrounds/robot-bg.png")
 robot_background = pygame.transform.scale(robot_background, (800, 600))
+wizard_background = pygame.image.load("assets/backgrounds/wizard-bg.png")
+wizard_background = pygame.transform.scale(wizard_background, (800, 600))
 # weapons
 laser = pygame.image.load("assets/weapons/laser.png")
 laser = pygame.transform.scale(laser, (50, 600))
 laser_blink = pygame.image.load("assets/weapons/blink-laser.png")
 laser_blink = pygame.transform.scale(laser_blink, (50, 600))
+wand = pygame.image.load("assets/weapons/wand.png")
+wand = pygame.transform.scale(wand, (25, 150))
 
 # laser class
 class Laser(pygame.sprite.Sprite):
