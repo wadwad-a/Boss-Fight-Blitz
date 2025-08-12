@@ -6,6 +6,11 @@ pygame.init()
 screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("Boss Fight Blitz")
 clock = pygame.time.Clock()
+show_death_popup = False
+show_win_popup = False
+pygame.mixer.music.set_volume(0.45)
+popup_dismissed_time = 0
+click_immunity_duration = 1
 
 # create assets
 # icons
@@ -295,7 +300,17 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if menu and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+
+        if menu and (show_death_popup or show_win_popup):
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                show_death_popup = False
+                show_win_popup = False
+                popup_dismissed_time = time.time()
+            continue
+
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu:
+            if time.time() - popup_dismissed_time < click_immunity_duration:
+                continue
             mouse = pygame.mouse.get_pos()
             if kraken_rect.collidepoint(mouse):
                 kraken_battle()
@@ -304,7 +319,6 @@ while running:
             elif wizard_rect.collidepoint(mouse):
                 wizard_battle()
             else:
-                # Check player select icons
                 for i, rect in enumerate(player_rects):
                     if rect.collidepoint(mouse):
                         select_sound = pygame.mixer.Sound("assets/music/select.mp3")
@@ -323,6 +337,7 @@ while running:
             pygame.mixer.music.load("assets/music/miffy_cafe.mp3")
             pygame.mixer.music.play(loops=-1)
         lobby = True
+
         if counter % 60 == 0:
             r = random.randint(0, 255)
             g = random.randint(0, 255)
@@ -330,7 +345,7 @@ while running:
 
         screen.fill((r, g, b))
 
-        if r < 75 and g < 75:
+        if r < 128 and g < 128:
             level_text = ithaca_level.render("Level Select", True, (255, 255, 255))
             player_text = ithaca_player.render("Player Select", True, (255, 255, 255))
         else:
@@ -348,20 +363,16 @@ while running:
         # Level select icons and hover
         if kraken_rect.collidepoint(mouse):
             screen.blit(kraken_dark, (100, 150))
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                kraken_battle()
         else:
             screen.blit(kraken_icon, (100, 150))
+
         if robot_rect.collidepoint(mouse):
             screen.blit(robot_dark, (300, 150))
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                robot_battle()
         else:
             screen.blit(robot_icon, (300, 150))
+
         if wizard_rect.collidepoint(mouse):
             screen.blit(wizard_dark, (500, 150))
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                wizard_battle()
         else:
             screen.blit(wizard_icon, (500, 150))
 
@@ -379,6 +390,7 @@ while running:
             if rect.collidepoint(mouse):
                 hovered_index = i
                 break
+
         if hovered_index is not None:
             # clear text area before drawing text to avoid overlap
             text_area_rect = pygame.Rect(0, 500, 800, 80)
@@ -391,6 +403,15 @@ while running:
             screen.blit(name_surf, name_rect)
             screen.blit(desc_surf, desc_rect)
 
+        if show_death_popup or show_win_popup:
+            overlay = pygame.Surface((800, 600), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))
+            screen.blit(overlay, (0, 0))
+            text_str = "You Died" if show_death_popup else "You Won"
+            text_color = (255, 0, 0) if show_death_popup else (0, 255, 0)
+            text_surf = ithaca_player.render(text_str, True, text_color)
+            text_rect = text_surf.get_rect(center=(400, 300))
+            screen.blit(text_surf, text_rect)
     else:
         if current_battle == "robot":
             robocount += 0.05
@@ -399,6 +420,8 @@ while running:
             if elapsed > 63:
                 menu = True
                 current_battle = None
+                show_win_popup = True
+                show_death_popup = False
                 laser_group.empty()
             else:
                 now = time.time()
@@ -436,6 +459,7 @@ while running:
                         attempts += 1
 
                 if blinking:
+                    laser_ex = False
                     if now - last_blink_switch > blink_duration:
                         blink_on = not blink_on
                         last_blink_switch = now
@@ -489,6 +513,11 @@ while running:
 
                 elif laser_active:
                     laser_group.draw(screen)
+                    if not laser_ex:
+                        laser_sound = pygame.mixer.Sound("assets/music/laser.mp3")
+                        laser_sound.set_volume(1.0)
+                        laser_sound.play()
+                    laser_ex = True
 
                 screen.blit(player.image, player.rect)
 
@@ -496,6 +525,8 @@ while running:
                     if pygame.sprite.spritecollideany(player, laser_group):
                         menu = True
                         current_battle = None
+                        show_death_popup = True
+                        show_win_popup = False
                         laser_group.empty()
 
         elif current_battle == "kraken":
@@ -514,6 +545,8 @@ while running:
                 current_battle = None
                 wizard_wands.empty()
                 wizard_projectiles.empty()
+                show_win_popup = True
+                show_death_popup = False
             else:
                 # Spawn new wands every 3 seconds only if no projectiles on screen
                 if now - last_wand_spawn_time > 3 and len(wizard_projectiles) == 0:
@@ -571,7 +604,13 @@ while running:
                 wand_length = 150  # fixed length of wand image before rotation
                 for wand_sprite in wizard_wands:
                     if not wand_sprite.has_fired and now - wand_sprite.spawn_time > 1:
+                        proj_ex = False
                         wand_length = wand_sprite.original_image.get_height()
+                        if not proj_ex:
+                            laser_sound = pygame.mixer.Sound("assets/music/spell.mp3")
+                            laser_sound.set_volume(1.0)
+                            laser_sound.play()
+                        proj_ex = True
                         
                         # Vector pointing from pivot to tip (wand points upward initially)
                         local_tip = pygame.math.Vector2(0, -wand_length / 2)
@@ -595,6 +634,7 @@ while running:
                         projectile = Projectile(spawn_pos.x, spawn_pos.y, wand_sprite.angle)
                         wizard_projectiles.add(projectile)
                         wand_sprite.has_fired = True
+                        
 
                 wizard_wands.update()
                 wizard_projectiles.update()
@@ -619,6 +659,8 @@ while running:
                 if pygame.sprite.spritecollideany(player, wizard_wands, collided=pygame.sprite.collide_mask):
                     menu = True
                     current_battle = None
+                    show_death_popup = True
+                    show_win_popup = False
                     wizard_wands.empty()
                     wizard_projectiles.empty()
 
@@ -627,6 +669,8 @@ while running:
                     if proj.can_collide() and pygame.sprite.collide_mask(proj, player):
                         menu = True
                         current_battle = None
+                        show_death_popup = True
+                        show_win_popup = False
                         wizard_wands.empty()
                         wizard_projectiles.empty()
                         break
