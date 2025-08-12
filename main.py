@@ -45,7 +45,7 @@ wizard_background_2 = pygame.image.load("assets/backgrounds/wizard-bg-2.png")
 wizard_background_2 = pygame.transform.scale(wizard_background_2, (800, 600))
 # weapons
 laser = pygame.image.load("assets/weapons/laser.png")
-laser = pygame.transform.scale(laser, (50, 600))
+laser = pygame.transform.scale(laser, (50, 800))
 laser_blink = pygame.image.load("assets/weapons/blink-laser.png")
 laser_blink = pygame.transform.scale(laser_blink, (50, 600))
 wand_img = pygame.image.load("assets/weapons/wand.png").convert_alpha()
@@ -53,10 +53,20 @@ wand_img = pygame.transform.scale(wand_img, (25, 150))
 
 # laser class
 class Laser(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, orientation='vertical'):
         super().__init__()
-        self.image = laser
-        self.rect = self.image.get_rect(midleft=(x, y))
+        length = 600
+        width = 50
+        self.orientation = orientation
+        self.original_image = pygame.Surface((width, length), pygame.SRCALPHA)
+        pygame.draw.rect(self.original_image, (255, 0, 0), self.original_image.get_rect())
+        if orientation == 'vertical':
+            self.image = self.original_image
+            self.rect = self.image.get_rect(midtop=(x, 0))
+        else:
+            self.image = pygame.transform.rotate(self.original_image, 90)
+            self.image = pygame.transform.scale(self.image, (800, 50))
+            self.rect = self.image.get_rect(topleft=(0, y - 25))
 
     def update(self):
         pass
@@ -405,12 +415,24 @@ while running:
                     count = 1
                     if 5 <= blink_times_done <= 11:
                         count = 2
-                    elif blink_times_done >= 12:
+                    elif 12 <= blink_times_done <= 21:
                         count = 3
+                    elif blink_times_done >= 22:
+                        count = 4
+
                     while len(blink_positions) < count and attempts < max_attempts:
-                        x = random.randint(0, 750)
+                        x = random.randint(50, 750)
                         if all(abs(x - px) >= 50 for px in blink_positions):
                             blink_positions.append(x)
+                        attempts += 1
+
+                    # Horizontal blink positions - random y, same count rules as vertical lasers
+                    horizontal_blink_positions = []
+                    attempts = 0
+                    while len(horizontal_blink_positions) < (1 if count == 2 else 2 if count == 3 else 3 if count == 4 else 0) and attempts < max_attempts:
+                        y = random.randint(50, 550)
+                        if all(abs(y - py) >= 50 for py in horizontal_blink_positions):
+                            horizontal_blink_positions.append(y)
                         attempts += 1
 
                 if blinking:
@@ -426,8 +448,16 @@ while running:
 
                             laser_positions = blink_positions.copy()
 
+                            # Add vertical lasers
                             for x in laser_positions:
-                                new_laser = Laser(x, 300)
+                                new_laser = Laser(x, 300, orientation='vertical')
+                                laser_group.add(new_laser)
+
+                            # Add horizontal lasers based on count of vertical lasers
+                            horizontal_count = 1 if len(laser_positions) == 2 else 2 if len(laser_positions) == 3 else 3 if len(laser_positions) == 4 else 0
+                            for i in range(horizontal_count):
+                                y = horizontal_blink_positions[i]
+                                new_laser = Laser(400, y, orientation='horizontal')
                                 laser_group.add(new_laser)
 
                             laser_show_start_time = now
@@ -440,14 +470,23 @@ while running:
                 laser_group.update()
                 keys = pygame.key.get_pressed()
                 player.update(keys)
+
                 if robocount % 2 >= 0 and robocount % 2 < 1:
                     screen.blit(robot_background_2, (0, 0))
                 else:
                     screen.blit(robot_background_1, (0, 0))
 
                 if blinking and blink_on:
-                    for pos in blink_positions:
-                        screen.blit(laser_blink, (pos, 0))
+                    # Blink vertical lasers (full height)
+                    for x in blink_positions:
+                        screen.blit(laser_blink, (x - laser_blink.get_width() // 2, 0))
+
+                    # Blink horizontal lasers (full width)
+                    horizontal_blink_image = pygame.transform.rotate(laser_blink, 90)
+                    horizontal_blink_image = pygame.transform.scale(horizontal_blink_image, (800, 50))
+                    for y in horizontal_blink_positions:
+                        screen.blit(horizontal_blink_image, (0, y - 25))
+
                 elif laser_active:
                     laser_group.draw(screen)
 
@@ -484,12 +523,14 @@ while running:
                         wizard_wand_phase = 1  # Loop phases
 
                     # Determine count of wands based on phase
-                    if 1 <= wizard_wand_phase <= 4:
+                    if 1 <= wizard_wand_phase <= 3:
                         count = 1
-                    elif 5 <= wizard_wand_phase <= 11:
+                    elif 4 <= wizard_wand_phase <= 7:
                         count = 2
-                    else:
+                    elif 7 <= wizard_wand_phase <= 11:
                         count = 3
+                    else:
+                        count = 4
 
                     offset = 10
                     wand_length = wand_img.get_height()  # 150
@@ -499,22 +540,27 @@ while running:
                         side = random.choice(sides)
 
                         if side == "bottom":
-                            # X inside screen leaving room for wand length on sides
+                            angle = random.uniform(-75, 75)
                             pivot_x = random.randint(int(wand_length / 2), 800 - int(wand_length / 2))
                             pivot_y = 625
-                            angle = random.uniform(-75, 75)
                         elif side == "left":
-                            pivot_x = 50
-                            pivot_y = random.randint(int(wand_length / 2), 600 - int(wand_length / 2))
                             angle = random.uniform(15, 165)
+                            if angle < 45 or angle > 135:
+                                pivot_x = 25
+                            else:
+                                pivot_x = 50
+                            pivot_y = random.randint(int(wand_length / 2), 600 - int(wand_length / 2))
                         elif side == "top":
+                            angle = random.uniform(105, 255)
                             pivot_x = random.randint(int(wand_length / 2), 800 - int(wand_length / 2))
                             pivot_y = -25
-                            angle = random.uniform(105, 255)
                         else:  # right
-                            pivot_x = 750
-                            pivot_y = random.randint(int(wand_length / 2), 600 - int(wand_length / 2))
                             angle = random.uniform(195, 345)
+                            if angle < 225 or angle > 315:
+                                pivot_x = 750
+                            else:
+                                pivot_x = 725
+                            pivot_y = random.randint(int(wand_length / 2), 600 - int(wand_length / 2))
 
                         wand_sprite = Wand((pivot_x, pivot_y), angle, side)
                         wizard_wands.add(wand_sprite)
