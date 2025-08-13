@@ -101,6 +101,10 @@ jellyfish = pygame.image.load("assets/weapons/jellyfish.png")
 jellyfish = pygame.transform.scale(jellyfish, (50, 120))
 boat = pygame.image.load("assets/weapons/boat.png")
 boat = pygame.transform.scale(boat, (200, 150))
+water_hb = pygame.image.load("assets/weapons/water.png")
+water_hb = pygame.transform.scale(water_hb, (800, 600))
+water_mask = pygame.mask.from_surface(water_hb)
+water_rect = water_hb.get_rect(topleft=(0, 0))
 
 # laser class
 class Laser(pygame.sprite.Sprite):
@@ -671,9 +675,10 @@ while running:
                     last_kraken_frame_change = now
 
                 screen.blit(kraken_bg, (0, 0))
+                screen.blit(water_hb, (0, 0))
 
                 # Chance to launch boat
-                if random.random() < 0.007:
+                if len(boats_group) < 3 and random.random() < 0.007:
                     direction = random.choice(["left", "right"])
                     y_start = random.randint(150, 500)
                     duration = random.uniform(2, 4)
@@ -687,7 +692,7 @@ while running:
                     jellyfish_sequence_active = True
                     launch_times = [now + i * 0.5 for i in range(6)]
                     for idx, launch_time in zip(sequence, launch_times):
-                        x_pos = 75 + idx * ((800 - 150) / 5)
+                        x_pos = 65 + idx * ((800 - 130) / 5)
                         jellyfish_sprite = Jellyfish(x_pos, launch_time)
                         jellyfish_group.add(jellyfish_sprite)
                 if jellyfish_sequence_active and len(jellyfish_group) == 0:
@@ -726,6 +731,23 @@ while running:
                     actionKraken = ["was stung by", "was mauled by", "was crushed by", "was poisoned by", "was hugged too hard by"]
                     jellyKraken = ["rude", "unkind", "mean", "angry", "irritated", "annoyed", "confused", "malicious"]
                     text_die = f"Player {random.choice(actionKraken)} {random.choice(jellyKraken)} Jellyfish."
+                
+                offset = (int(player.rect.x - water_rect.x), int(player.rect.y - water_rect.y))
+                if water_mask.overlap(player.mask, offset):
+                    if not hasattr(player, "water_touch_start"):
+                        player.water_touch_start = time.time()
+                    elif time.time() - player.water_touch_start >= 1.5:
+                        menu = True
+                        current_battle = None
+                        show_death_popup = True
+                        show_win_popup = False
+                        boats_group.empty()
+                        jellyfish_group.empty()
+                        drownText = ["Player was drowned in the water by Kraken.", "Player was taken under the waves by Kraken.", "Player could not breathe underwater.", "Player forgot how to swim.", "Player got swept away by a rip current.", "Player couldn't tread water.", "Player was lost at sea."]
+                        text_die = random.choice(drownText)
+                else:
+                    if hasattr(player, "water_touch_start"):
+                        del player.water_touch_start
 
         elif current_battle == "wizard":
             wizcount += 0.05
