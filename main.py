@@ -21,6 +21,12 @@ robot_icon = pygame.image.load("assets/icons/ROBOT-ICON.png")
 robot_icon = pygame.transform.scale(robot_icon, (200, 200))
 wizard_icon = pygame.image.load("assets/icons/WIZARD-ICON.png")
 wizard_icon = pygame.transform.scale(wizard_icon, (200, 200))
+
+# create masks for pixel-perfect collision
+kraken_mask = pygame.mask.from_surface(kraken_icon)
+robot_mask = pygame.mask.from_surface(robot_icon)
+wizard_mask = pygame.mask.from_surface(wizard_icon)
+
 # player select
 smiley_icon = pygame.image.load("assets/icons/smiley.png")
 smiley_icon = pygame.transform.scale(smiley_icon, (50, 50))
@@ -32,13 +38,16 @@ heart_icon = pygame.image.load("assets/icons/heart.png")
 heart_icon = pygame.transform.scale(heart_icon, (50, 50))
 penny_icon = pygame.image.load("assets/icons/penny.png")
 penny_icon = pygame.transform.scale(penny_icon, (50, 50))
+
 # fonts
 ithaca_level = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
 ithaca_player = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 92)
 ithaca_hover = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 30)
 ithaca_desc = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 20)
+
 # music
 cyberblade = pygame.mixer.music.load("assets/music/cyberblade.mp3")
+
 # backgrounds
 robot_background_1 = pygame.image.load("assets/backgrounds/robot-bg-1.png")
 robot_background_1 = pygame.transform.scale(robot_background_1, (800, 600))
@@ -48,6 +57,7 @@ wizard_background_1 = pygame.image.load("assets/backgrounds/wizard-bg-1.png")
 wizard_background_1 = pygame.transform.scale(wizard_background_1, (800, 600))
 wizard_background_2 = pygame.image.load("assets/backgrounds/wizard-bg-2.png")
 wizard_background_2 = pygame.transform.scale(wizard_background_2, (800, 600))
+
 # weapons
 laser = pygame.image.load("assets/weapons/laser.png")
 laser = pygame.transform.scale(laser, (50, 800))
@@ -96,7 +106,6 @@ class Player(pygame.sprite.Sprite):
         self.rect.clamp_ip(screen.get_rect())
 
 # hover effect
-
 menu = True
 current_battle = None
 kraken_rect = kraken_icon.get_rect(topleft=(100, 200))
@@ -127,7 +136,6 @@ robot_dark = hover(robot_icon)
 wizard_dark = hover(wizard_icon)
 
 laser_group = pygame.sprite.Group()
-
 selected_player = 0
 player = Player(player_icons[selected_player])
 robot_fight_start_time = None
@@ -140,12 +148,10 @@ blink_on = False
 last_blink_switch = 0
 laser_active = False
 laser_show_start_time = 0
-
 blink_positions = []
 laser_positions = []
 
-# WAND AND PROJECTILE CLASSES FOR WIZARD FIGHT
-
+# Wand and projectile classes (unchanged)
 class Wand(pygame.sprite.Sprite):
     def __init__(self, pivot_pos, angle, side):
         super().__init__()
@@ -160,20 +166,13 @@ class Wand(pygame.sprite.Sprite):
         self.side = side
 
     def rotate(self):
-        # Pygame rotation is counter-clockwise but we have to negate angle to rotate clockwise
         rotated_image = pygame.transform.rotate(self.original_image, -self.angle)
-        
-        # Offset is from pivot to center of wand image (assuming wand points up)
-        rotated_offset = self.offset.   rotate(-self.angle)
-        
-        # New rect centered at pivot + rotated offset
+        rotated_offset = self.offset.rotate(-self.angle)
         rect = rotated_image.get_rect(center=self.pivot + rotated_offset)
-        
         return rotated_image, rect
 
     def update(self):
         pass
-
 
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y, angle):
@@ -185,39 +184,37 @@ class Projectile(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(self.original_image, -(angle - 90))
         self.rect = self.image.get_rect(center=(x, y))
         self.mask = pygame.mask.from_surface(self.image)
-        self.angle = angle - 90  # Adjust angle here to match rotated image
+        self.angle = angle - 90
         self.speed = 20
         self.spawn_time = time.time()
-
-        # Store precise positions for smooth movement
         self.pos_x = float(x)
         self.pos_y = float(y)
 
     def update(self):
         dx = self.speed * math.cos(math.radians(self.angle))
         dy = self.speed * math.sin(math.radians(self.angle))
-
         self.pos_x += dx
         self.pos_y += dy
-
         self.rect.centerx = int(self.pos_x)
         self.rect.centery = int(self.pos_y)
-
-        # Remove projectile if offscreen
         if (self.rect.right < 0 or self.rect.left > 800 or
             self.rect.bottom < 0 or self.rect.top > 600):
             self.kill()
 
     def can_collide(self):
-        # Only allow collisions 0.15s after spawn (to avoid immediate self-hit)
         return (time.time() - self.spawn_time) > 0.15
-# BOSS FIGHTS
 
-# Kraken
+# Pixel-perfect collision helper
+def is_mouse_over_icon(mouse_pos, icon_rect, icon_mask):
+    rel_x = mouse_pos[0] - icon_rect.left
+    rel_y = mouse_pos[1] - icon_rect.top
+    if 0 <= rel_x < icon_rect.width and 0 <= rel_y < icon_rect.height:
+        return icon_mask.get_at((rel_x, rel_y))
+    return False
 
+# Boss fight functions (unchanged)
 def kraken_battle():
-    global counter, boss, lobby
-    global menu, current_battle
+    global counter, boss, lobby, menu, current_battle
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
     pygame.mixer.music.load("assets/music/stormcall.mp3")
@@ -229,11 +226,8 @@ def kraken_battle():
     current_battle = "kraken"
     pygame.display.flip()
 
-# Robot
-
 def robot_battle():
-    global counter, boss, lobby, robocount
-    global menu, current_battle, robot_fight_start_time, laser_group
+    global counter, boss, lobby, robocount, menu, current_battle, robot_fight_start_time, laser_group
     global blink_times_done, blinking, blink_on, laser_active, laser_show_start_time
     global blink_times_needed, blink_positions, laser_positions
     pygame.mixer.music.stop()
@@ -259,11 +253,8 @@ def robot_battle():
     laser_positions = []
     pygame.display.flip()
 
-# Wizard
-
 def wizard_battle():
-    global counter, boss, lobby, wizcount
-    global menu, current_battle
+    global counter, boss, lobby, wizcount, menu, current_battle
     global wizard_fight_start_time, wizard_wands, wizard_projectiles, wizard_wand_phase, last_wand_spawn_time
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
@@ -280,7 +271,7 @@ def wizard_battle():
     wizard_projectiles = pygame.sprite.Group()
     wizard_wand_phase = 0
     last_wand_spawn_time = 0
-    player.rect.center = (100, 300)  # Reset player position
+    player.rect.center = (100, 300)
     pygame.display.flip()
 
 # Initialize wizard groups and variables
@@ -313,11 +304,11 @@ while running:
             if time.time() - popup_dismissed_time < click_immunity_duration:
                 continue
             mouse = pygame.mouse.get_pos()
-            if kraken_rect.collidepoint(mouse):
+            if is_mouse_over_icon(mouse, kraken_rect, kraken_mask):
                 kraken_battle()
-            elif robot_rect.collidepoint(mouse):
+            elif is_mouse_over_icon(mouse, robot_rect, robot_mask):
                 robot_battle()
-            elif wizard_rect.collidepoint(mouse):
+            elif is_mouse_over_icon(mouse, wizard_rect, wizard_mask):
                 wizard_battle()
             else:
                 for i, rect in enumerate(player_rects):
@@ -362,17 +353,17 @@ while running:
         mouse = pygame.mouse.get_pos()
 
         # Level select icons and hover
-        if kraken_rect.collidepoint(mouse):
+        if is_mouse_over_icon(mouse, kraken_rect, kraken_mask):
             screen.blit(kraken_dark, (100, 150))
         else:
             screen.blit(kraken_icon, (100, 150))
 
-        if robot_rect.collidepoint(mouse):
+        if is_mouse_over_icon(mouse, robot_rect, robot_mask):
             screen.blit(robot_dark, (300, 150))
         else:
             screen.blit(robot_icon, (300, 150))
 
-        if wizard_rect.collidepoint(mouse):
+        if is_mouse_over_icon(mouse, wizard_rect, wizard_mask):
             screen.blit(wizard_dark, (500, 150))
         else:
             screen.blit(wizard_icon, (500, 150))
@@ -393,7 +384,6 @@ while running:
                 break
 
         if hovered_index is not None:
-            # clear text area before drawing text to avoid overlap
             text_area_rect = pygame.Rect(0, 500, 800, 80)
             screen.fill((r, g, b), text_area_rect)
             color = (255, 255, 255) if r < 75 and g < 75 else (0, 0, 0)
@@ -413,9 +403,10 @@ while running:
             text_surf = ithaca_player.render(text_str, True, text_color)
             text_rect = text_surf.get_rect(center=(400, 300))
             screen.blit(text_surf, text_rect)
-            text_desc = ithaca_hover.render(text_die, True, text_color)
-            text_rect1 = text_desc.get_rect(center=(400, 400))
-            screen.blit(text_desc, text_rect1)
+            if show_death_popup:
+                text_desc = ithaca_hover.render(text_die, True, text_color)
+                text_rect1 = text_desc.get_rect(center=(400, 400))
+                screen.blit(text_desc, text_rect1)
     else:
         if current_battle == "robot":
             robocount += 0.05
