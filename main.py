@@ -84,7 +84,11 @@ laser = pygame.transform.scale(laser, (50, 800))
 laser_blink = pygame.image.load("assets/weapons/blink-laser.png")
 laser_blink = pygame.transform.scale(laser_blink, (50, 600))
 wand_img = pygame.image.load("assets/weapons/wand.png").convert_alpha()
-wand_img = pygame.transform.scale(wand_img, (25, 150))
+wand_img = pygame.transform.scale(wand_img, (25, 160))
+jellyfish = pygame.image.load("assets/weapons/jellyfish.png")
+jellyfish = pygame.transform.scale(jellyfish, (50, 120))
+boat = pygame.image.load("assets/weapons/boat.png")
+boat = pygame.transform.scale(boat, (200, 150))
 
 # laser class
 class Laser(pygame.sprite.Sprite):
@@ -128,9 +132,9 @@ class Player(pygame.sprite.Sprite):
 # hover effect
 menu = True
 current_battle = None
-kraken_rect = kraken_icon.get_rect(topleft=(100, 200))
-robot_rect = robot_icon.get_rect(topleft=(300, 200))
-wizard_rect = wizard_icon.get_rect(topleft=(500, 200))
+kraken_rect = kraken_icon.get_rect(topleft=(500, 200))
+robot_rect = robot_icon.get_rect(topleft=(100, 200))
+wizard_rect = wizard_icon.get_rect(topleft=(300, 200))
 
 player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon]
 player_names = ["Smiley", "Cookie", "Crazy", "Heart", "Penny"]
@@ -223,6 +227,57 @@ class Projectile(pygame.sprite.Sprite):
 
     def can_collide(self):
         return (time.time() - self.spawn_time) > 0.15
+    
+
+class Boat(pygame.sprite.Sprite):
+    def __init__(self, direction, y_start, duration):
+        super().__init__()
+        self.image = boat
+        self.rect = self.image.get_rect()
+        self.start_time = time.time()
+        self.duration = duration
+        self.y_start = y_start
+        self.y_peak = y_start - 200
+        self.direction = direction
+        if direction == "right":
+            self.rect.left = 800
+            self.x_start = 800
+            self.x_end = -self.rect.width
+        else:
+            self.rect.right = 0
+            self.x_start = -self.rect.width
+            self.x_end = 800
+
+    def update(self):
+        elapsed = time.time() - self.start_time
+        t = min(elapsed / self.duration, 1)
+        self.rect.centerx = self.x_start + (self.x_end - self.x_start) * t
+        self.rect.centery = self.y_start - 4 * (self.y_start - self.y_peak) * t * (1 - t)
+        if t >= 1:
+            self.kill()
+
+
+class Jellyfish(pygame.sprite.Sprite):
+    def __init__(self, x, start_time):
+        super().__init__()
+        self.image = jellyfish
+        self.rect = self.image.get_rect(midbottom=(x, 800))
+        self.start_time = start_time  # now this is an absolute timestamp
+        self.y_start = 800
+        self.y_peak = self.y_start - 450
+        self.finished = False
+
+    def update(self):
+        now = time.time()
+        if now < self.start_time:
+            return
+        elapsed = now - self.start_time
+        duration = 1.0  # 1 second to reach top and back
+        t = min(elapsed / duration, 1)
+        self.rect.centery = self.y_start - 4 * (self.y_start - self.y_peak) * t * (1 - t)
+        if t >= 1 and not self.finished:
+            self.kill()
+            self.finished = True
 
 # Pixel-perfect collision helper
 def is_mouse_over_icon(mouse_pos, icon_rect, icon_mask):
@@ -235,6 +290,7 @@ def is_mouse_over_icon(mouse_pos, icon_rect, icon_mask):
 # Boss fight functions (unchanged)
 def kraken_battle():
     global counter, boss, lobby, menu, current_battle
+    global kraken_fight_start_time, kraken_backgrounds, boats_group, jellyfish_group, jellyfish_pending
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
     pygame.mixer.music.load("assets/music/stormcall.mp3")
@@ -242,8 +298,18 @@ def kraken_battle():
     menu = False
     boss = True
     lobby = False
-    counter = 60
+    counter = 57
     current_battle = "kraken"
+    kraken_fight_start_time = time.time()
+    boats_group = pygame.sprite.Group()
+    jellyfish_group = pygame.sprite.Group()
+    jellyfish_pending = []
+    kraken_backgrounds = [
+        kraken_background_1, kraken_background_2, kraken_background_3,
+        kraken_background_4, kraken_background_5, kraken_background_6,
+        kraken_background_7, kraken_background_8, kraken_background_9, kraken_background_10
+    ]
+    player.rect.center = (100, 300)
     pygame.display.flip()
 
 def robot_battle():
@@ -300,6 +366,20 @@ wizard_projectiles = pygame.sprite.Group()
 wizard_wand_phase = 0
 wizard_wand_timer = 0
 wizard_fight_start_time = None
+
+# Initialize kraken groups and variables
+kraken_fight_start_time = None
+last_kraken_frame_change = 0
+kraken_backgrounds = [
+    kraken_background_1, kraken_background_2, kraken_background_3,
+    kraken_background_4, kraken_background_5, kraken_background_6,
+    kraken_background_7, kraken_background_8, kraken_background_9,
+    kraken_background_10
+]
+kraken_bg = kraken_backgrounds[0]
+boats_group = pygame.sprite.Group()
+jellyfish_group = pygame.sprite.Group()
+jellyfish_sequence_active = False
 
 # game loop
 boss = False
@@ -374,19 +454,19 @@ while running:
 
         # Level select icons and hover
         if is_mouse_over_icon(mouse, kraken_rect, kraken_mask):
-            screen.blit(kraken_dark, (100, 150))
+            screen.blit(kraken_dark, (500, 150))
         else:
-            screen.blit(kraken_icon, (100, 150))
+            screen.blit(kraken_icon, (500, 150))
 
         if is_mouse_over_icon(mouse, robot_rect, robot_mask):
-            screen.blit(robot_dark, (300, 150))
+            screen.blit(robot_dark, (100, 150))
         else:
-            screen.blit(robot_icon, (300, 150))
+            screen.blit(robot_icon, (100, 150))
 
         if is_mouse_over_icon(mouse, wizard_rect, wizard_mask):
-            screen.blit(wizard_dark, (500, 150))
+            screen.blit(wizard_dark, (300, 150))
         else:
-            screen.blit(wizard_icon, (500, 150))
+            screen.blit(wizard_icon, (300, 150))
 
         # Player select icons
         for i, icon in enumerate(player_icons):
@@ -548,10 +628,78 @@ while running:
                         text_die = f"Player was {random.choice(laserChoice2)} by {random.choice(laserChoice)}."
 
         elif current_battle == "kraken":
-            screen.fill((0, 0, 128))
-            #if elapsed > 57:
-                #menu = True
-                #current_battle = None
+            elapsed = time.time() - kraken_fight_start_time
+            now = time.time()
+
+            if elapsed > 57:
+                menu = True
+                current_battle = None
+                show_win_popup = True
+                show_death_popup = False
+                boats_group.empty()
+                jellyfish_group.empty()
+            else:
+                # Update background every ~1 seconds
+                if now - last_kraken_frame_change > 1:
+                    kraken_bg = random.choice(kraken_backgrounds)
+                    last_kraken_frame_change = now
+
+                screen.blit(kraken_bg, (0, 0))
+
+                # Chance to launch boat
+                if random.random() < 0.01:
+                    direction = random.choice(["left", "right"])
+                    y_start = random.randint(150, 500)
+                    duration = random.uniform(2, 4)
+                    boat_sprite = Boat(direction, y_start, duration)
+                    boats_group.add(boat_sprite)
+
+                # Chance to launch jellyfish sequence
+                if not jellyfish_sequence_active and random.random() < 0.01:
+                    sequence = list(range(6))
+                    random.shuffle(sequence)
+                    jellyfish_sequence_active = True
+                    launch_times = [now + i * 0.5 for i in range(6)]
+                    for idx, launch_time in zip(sequence, launch_times):
+                        x_pos = 75 + idx * ((800 - 150) / 5)
+                        jellyfish_sprite = Jellyfish(x_pos, launch_time)
+                        jellyfish_group.add(jellyfish_sprite)
+                if jellyfish_sequence_active and len(jellyfish_group) == 0:
+                    jellyfish_sequence_active = False
+
+                boats_group.update()
+                jellyfish_group.update()
+
+                boats_group.draw(screen)
+                jellyfish_group.draw(screen)
+
+                keys = pygame.key.get_pressed()
+                player.update(keys)
+                screen.blit(player.image, player.rect)
+
+                # Check collisions
+                if pygame.sprite.spritecollideany(player, boats_group, collided=pygame.sprite.collide_mask):
+                    menu = True
+                    current_battle = None
+                    show_death_popup = True
+                    show_win_popup = False
+                    boats_group.empty()
+                    jellyfish_group.empty()
+                    hitKraken = ["was hit by", "was struck by", "was crushed by", "collided with", "drowned under", "was knocked out by"]
+                    adjKraken = ["large", "massive", "formidable", "unforgiving", "rude"]
+                    boatKraken = ["Boat", "Ship", "Vessel", "Sailboat"]
+                    text_die = f"Player {random.choice(hitKraken)} {random.choice(adjKraken)} {random.choice(boatKraken)}."
+
+                if pygame.sprite.spritecollideany(player, jellyfish_group, collided=pygame.sprite.collide_mask):
+                    menu = True
+                    current_battle = None
+                    show_death_popup = True
+                    show_win_popup = False
+                    boats_group.empty()
+                    jellyfish_group.empty()
+                    actionKraken = ["was stung by", "was mauled by", "was crushed by", "was poisoned by", "was hugged too hard by"]
+                    jellyKraken = ["rude", "unkind", "mean", "angry", "irritated", "annoyed", "confused", "malicious"]
+                    text_die = f"Player {random.choice(actionKraken)} {random.choice(jellyKraken)} Jellyfish."
 
         elif current_battle == "wizard":
             wizcount += 0.05
@@ -595,7 +743,7 @@ while running:
                             pivot_x = random.randint(int(wand_length / 2), 800 - int(wand_length / 2))
                             pivot_y = 625
                         elif side == "left":
-                            angle = random.uniform(15, 165)
+                            angle = random.uniform(30, 150)
                             if angle < 45 or angle > 135:
                                 pivot_x = 25
                             else:
@@ -606,7 +754,7 @@ while running:
                             pivot_x = random.randint(int(wand_length / 2), 800 - int(wand_length / 2))
                             pivot_y = -25
                         else:  # right
-                            angle = random.uniform(195, 345)
+                            angle = random.uniform(210, 330)
                             if angle < 225 or angle > 315:
                                 pivot_x = 750
                             else:
