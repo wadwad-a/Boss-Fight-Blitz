@@ -38,6 +38,18 @@ heart_icon = pygame.image.load("assets/icons/heart.png")
 heart_icon = pygame.transform.scale(heart_icon, (50, 50))
 penny_icon = pygame.image.load("assets/icons/penny.png")
 penny_icon = pygame.transform.scale(penny_icon, (50, 50))
+unknown_icon = pygame.image.load("assets/icons/unknown.png")
+unknown_icon = pygame.transform.scale(unknown_icon, (50, 50))
+raspberry_icon = pygame.image.load("assets/icons/raspberry.png")
+raspberry_icon = pygame.transform.scale(raspberry_icon, (50, 50))
+orb_icon = pygame.image.load("assets/icons/orb.png")
+orb_icon = pygame.transform.scale(orb_icon, (50, 50))
+treasure_icon = pygame.image.load("assets/icons/treasure.png")
+treasure_icon = pygame.transform.scale(treasure_icon, (50, 50))
+chicken_icon = pygame.image.load("assets/icons/chicken.png")
+chicken_icon = pygame.transform.scale(chicken_icon, (50, 50))
+gold_icon = pygame.image.load("assets/icons/gold.png")
+gold_icon = pygame.transform.scale(gold_icon, (50, 50))
 
 # fonts
 ithaca_level = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
@@ -136,9 +148,9 @@ kraken_rect = kraken_icon.get_rect(topleft=(500, 200))
 robot_rect = robot_icon.get_rect(topleft=(100, 200))
 wizard_rect = wizard_icon.get_rect(topleft=(300, 200))
 
-player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon]
-player_names = ["Smiley", "Cookie", "Crazy", "Heart", "Penny"]
-player_descs = ["default", "yum", "what", "quite lovely", "woah i'm rich"]
+player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon]
+player_names = ["Smiley", "Cookie", "Crazy", "Heart", "Penny", "???", "???", "???", "???", "???"]
+player_descs = ["default", "yum", "what", "quite lovely", "woah i'm rich", "beat robot", "beat wizard", "beat kraken", "turn into a flaming chicken", "get every player"]
 icon_size = 50
 spacing = 30  # space between icons
 num_icons = len(player_icons)
@@ -413,12 +425,18 @@ while running:
             else:
                 for i, rect in enumerate(player_rects):
                     if rect.collidepoint(mouse):
-                        select_sound = pygame.mixer.Sound("assets/music/select.mp3")
-                        select_sound.play()
-                        selected_player = i
-                        player.image = player_icons[selected_player]
-                        player.rect = player.image.get_rect(center=player.rect.center)
-                        break
+                        if player_names[i] == "???":
+                            deny_sound = pygame.mixer.Sound("assets/music/deny.mp3")
+                            deny_sound.set_volume(0.4)
+                            deny_sound.play()
+                            break
+                        else:
+                            select_sound = pygame.mixer.Sound("assets/music/select.mp3")
+                            select_sound.play()
+                            selected_player = i
+                            player.image = player_icons[selected_player]
+                            player.rect = player.image.get_rect(center=player.rect.center)
+                            break
 
     if menu:
         if boss:
@@ -436,6 +454,9 @@ while running:
             b = random.randint(0, 255)
 
         screen.fill((r, g, b))
+        if (player_icons[5] == raspberry_icon and player_icons[6] == orb_icon and player_icons[7] == treasure_icon and player_icons[8] == chicken_icon):
+            player_icons[9] = gold_icon
+            player_names[9] = "Gold Medal"
 
         if r < 128 and g < 128:
             level_text = ithaca_level.render("Level Select", True, (255, 255, 255))
@@ -517,6 +538,8 @@ while running:
                 current_battle = None
                 show_win_popup = True
                 show_death_popup = False
+                player_icons[5] = raspberry_icon
+                player_names[5] = "Raspberry Pi(e)"
                 laser_group.empty()
             else:
                 now = time.time()
@@ -636,8 +659,11 @@ while running:
                 current_battle = None
                 show_win_popup = True
                 show_death_popup = False
+                player_icons[7] = treasure_icon
+                player_names[7] = "Treasure Chest"
                 boats_group.empty()
                 jellyfish_group.empty()
+                
             else:
                 # Update background every ~1 seconds
                 if now - last_kraken_frame_change > 1:
@@ -647,7 +673,7 @@ while running:
                 screen.blit(kraken_bg, (0, 0))
 
                 # Chance to launch boat
-                if random.random() < 0.01:
+                if random.random() < 0.007:
                     direction = random.choice(["left", "right"])
                     y_start = random.randint(150, 500)
                     duration = random.uniform(2, 4)
@@ -655,7 +681,7 @@ while running:
                     boats_group.add(boat_sprite)
 
                 # Chance to launch jellyfish sequence
-                if not jellyfish_sequence_active and random.random() < 0.01:
+                if not jellyfish_sequence_active and random.random() < 0.007:
                     sequence = list(range(6))
                     random.shuffle(sequence)
                     jellyfish_sequence_active = True
@@ -713,6 +739,8 @@ while running:
                 wizard_projectiles.empty()
                 show_win_popup = True
                 show_death_popup = False
+                player_icons[6] = orb_icon
+                player_names[6] = "Magic Orb"
             else:
                 # Spawn new wands every 3 seconds only if no projectiles on screen
                 if now - last_wand_spawn_time > 3 and len(wizard_projectiles) == 0:
@@ -722,11 +750,11 @@ while running:
                         wizard_wand_phase = 1  # Loop phases
 
                     # Determine count of wands based on phase
-                    if 1 <= wizard_wand_phase <= 3:
+                    if 1 <= wizard_wand_phase <= 4:
                         count = 1
-                    elif 4 <= wizard_wand_phase <= 7:
+                    elif 5 <= wizard_wand_phase <= 9:
                         count = 2
-                    elif 7 <= wizard_wand_phase <= 11:
+                    elif 10 <= wizard_wand_phase <= 14:
                         count = 3
                     else:
                         count = 4
@@ -845,6 +873,8 @@ while running:
                         chickenchance = random.randint(1, 50)
                         if chickenchance == 23:
                             randomText = "Flaming Chicken"
+                            player_names[8] = "Flaming Chicken"
+                            player_icons[8] = chicken_icon
                             pygame.mixer.Sound("assets/music/chicken.mp3").play()
                         else:
                             randomText = random.choice(magicText)
