@@ -81,8 +81,6 @@ ithaca_player = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 92)
 ithaca_hover = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 30)
 ithaca_desc = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 20)
 
-# music
-cyberblade = pygame.mixer.music.load("assets/music/cyberblade.mp3")
 
 # backgrounds
 forklift_on = pygame.image.load("assets/backgrounds/forklift-on.png")
@@ -351,6 +349,7 @@ def kraken_battle():
     global kraken_fight_start_time, kraken_backgrounds, kraken_lightnings, boats_group, jellyfish_group, jellyfish_pending
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
+    pygame.mixer.music.set_volume(0.6)
     pygame.mixer.music.load("assets/music/stormcall.mp3")
     pygame.mixer.music.play(start=45)
     menu = False
@@ -377,6 +376,7 @@ def robot_battle():
     global blink_times_needed, blink_positions, laser_positions
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
+    pygame.mixer.music.set_volume(0.2)
     pygame.mixer.music.load("assets/music/marcheur.mp3")
     pygame.mixer.music.play(start=89)
     menu = False
@@ -403,6 +403,7 @@ def wizard_battle():
     global wizard_fight_start_time, wizard_wands, wizard_projectiles, wizard_wand_phase, last_wand_spawn_time
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
+    pygame.mixer.music.set_volume(0.5)
     pygame.mixer.music.load("assets/music/cyberblade.mp3")
     pygame.mixer.music.play()
     menu = False
@@ -442,9 +443,6 @@ jellyfish_group = pygame.sprite.Group()
 jellyfish_sequence_active = False
 
 # game loop
-rwincount = 0
-kwincount = 0
-wwincount = 0
 boss = False
 lobby = False
 running = True
@@ -534,7 +532,7 @@ while running:
                             break
 
     if menu:
-        measure = 50
+        pygame.mixer.music.set_volume(0.6)
         player.speed = 5
         player.image = pygame.transform.scale(player.image, (50, 50))
         forklift_activated = False
@@ -753,6 +751,37 @@ while running:
                 if laser_active and now - laser_show_start_time > 1:
                     laser_active = False
                     laser_group.empty()
+                
+                if random_event:
+                    old_center = player.rect.center
+                    current_size = player.image.get_width()
+                    randomCheck = random.randint(1, 240)
+                    if randomCheck == 23:
+                        randomChoice = random.choice([1, 2, 3, 4, 5, 6])
+                        if randomChoice == 1 and player.speed != 10:
+                            player.speed = 10
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 2 and player.speed != 2.5:
+                            player.speed = 2.5
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 3 and player.speed != 5:
+                            player.speed = 5
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 4 and current_size != 50:
+                            new_size = 50
+                            player.image = pygame.transform.scale(player.image, (new_size, new_size))
+                            player.rect = player.image.get_rect(center=old_center)
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 5 and current_size != 25:
+                            new_size = 25
+                            player.image = pygame.transform.scale(player.image, (new_size, new_size))
+                            player.rect = player.image.get_rect(center=old_center)
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 6 and current_size != 100:
+                            new_size = 100
+                            player.image = pygame.transform.scale(player.image, (new_size, new_size))
+                            player.rect = player.image.get_rect(center=old_center)
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
 
                 laser_group.update()
                 keys = pygame.key.get_pressed()
@@ -909,7 +938,8 @@ while running:
 
                 if random_event:
                     old_center = player.rect.center
-                    randomCheck = random.randint(1, 360)
+                    current_size = player.image.get_width()
+                    randomCheck = random.randint(1, 240)
                     if randomCheck == 23:
                         randomChoice = random.choice([1, 2, 3, 4, 5, 6])
                         if randomChoice == 1 and player.speed != 10:
@@ -921,19 +951,19 @@ while running:
                         elif randomChoice == 3 and player.speed != 5:
                             player.speed = 5
                             pygame.mixer.Sound("assets/music/event.mp3").play()
-                        elif randomChoice == 4 and measure != 50:
-                            measure = 50
-                            player.image = pygame.transform.scale(player.image, (measure, measure))
+                        elif randomChoice == 4 and current_size != 50:
+                            new_size = 50
+                            player.image = pygame.transform.scale(player.image, (new_size, new_size))
                             player.rect = player.image.get_rect(center=old_center)
                             pygame.mixer.Sound("assets/music/event.mp3").play()
-                        elif randomChoice == 5 and measure != 25:
-                            measure = 25
-                            player.image = pygame.transform.scale(player.image, (measure, measure))
+                        elif randomChoice == 5 and current_size != 25:
+                            new_size = 25
+                            player.image = pygame.transform.scale(player.image, (new_size, new_size))
                             player.rect = player.image.get_rect(center=old_center)
                             pygame.mixer.Sound("assets/music/event.mp3").play()
-                        elif randomChoice == 6 and measure != 100:
-                            measure = 100
-                            player.image = pygame.transform.scale(player.image, (measure, measure))
+                        elif randomChoice == 6 and current_size != 100:
+                            new_size = 100
+                            player.image = pygame.transform.scale(player.image, (new_size, new_size))
                             player.rect = player.image.get_rect(center=old_center)
                             pygame.mixer.Sound("assets/music/event.mp3").play()
 
@@ -1163,6 +1193,37 @@ while running:
                 bar_height = 10
                 pygame.draw.rect(screen, (200, 200, 200), (100, 35, 600, bar_height))
                 pygame.draw.rect(screen, (0, 255, 0), (100, 35, bar_width, bar_height))
+
+                if random_event:
+                    old_center = player.rect.center
+                    current_size = player.image.get_width()
+                    randomCheck = random.randint(1, 240)
+                    if randomCheck == 23:
+                        randomChoice = random.choice([1, 2, 3, 4, 5, 6])
+                        if randomChoice == 1 and player.speed != 10:
+                            player.speed = 10
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 2 and player.speed != 2.5:
+                            player.speed = 2.5
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 3 and player.speed != 5:
+                            player.speed = 5
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 4 and current_size != 50:
+                            new_size = 50
+                            player.image = pygame.transform.scale(player.image, (new_size, new_size))
+                            player.rect = player.image.get_rect(center=old_center)
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 5 and current_size != 25:
+                            new_size = 25
+                            player.image = pygame.transform.scale(player.image, (new_size, new_size))
+                            player.rect = player.image.get_rect(center=old_center)
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 6 and current_size != 100:
+                            new_size = 100
+                            player.image = pygame.transform.scale(player.image, (new_size, new_size))
+                            player.rect = player.image.get_rect(center=old_center)
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
 
                 keys = pygame.key.get_pressed()
                 player.update(keys)
