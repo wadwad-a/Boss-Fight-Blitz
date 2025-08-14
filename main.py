@@ -61,6 +61,12 @@ ithaca_desc = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 20)
 cyberblade = pygame.mixer.music.load("assets/music/cyberblade.mp3")
 
 # backgrounds
+forklift_on = pygame.image.load("assets/backgrounds/forklift-on.png")
+forklift_on = pygame.transform.scale(forklift_on, (800, 600))
+forklift_off = pygame.image.load("assets/backgrounds/forklift-off.png")
+forklift_off = pygame.transform.scale(forklift_off, (800, 600))
+forklift_off_mask = pygame.mask.from_surface(forklift_off)
+forklift_off_pos = (0, 0)
 robot_background_1 = pygame.image.load("assets/backgrounds/robot-bg-1.png")
 robot_background_1 = pygame.transform.scale(robot_background_1, (800, 600))
 robot_background_2 = pygame.image.load("assets/backgrounds/robot-bg-2.png")
@@ -190,6 +196,9 @@ laser_active = False
 laser_show_start_time = 0
 blink_positions = []
 laser_positions = []
+forklift_touch_start = None
+forklift_activated = False
+forklift_time_required = 10
 
 # Wand and projectile classes (unchanged)
 class Wand(pygame.sprite.Sprite):
@@ -306,7 +315,7 @@ def is_mouse_over_icon(mouse_pos, icon_rect, icon_mask):
 # Boss fight functions (unchanged)
 def kraken_battle():
     global counter, boss, lobby, menu, current_battle
-    global kraken_fight_start_time, kraken_backgrounds, boats_group, jellyfish_group, jellyfish_pending
+    global kraken_fight_start_time, kraken_backgrounds, kraken_lightnings, boats_group, jellyfish_group, jellyfish_pending
     pygame.mixer.music.stop()
     pygame.mixer.music.unload()
     pygame.mixer.music.load("assets/music/stormcall.mp3")
@@ -321,10 +330,11 @@ def kraken_battle():
     jellyfish_group = pygame.sprite.Group()
     jellyfish_pending = []
     kraken_backgrounds = [
-        kraken_background_1, kraken_background_2, kraken_background_3,
-        kraken_background_4, kraken_background_5, kraken_background_6,
+        kraken_background_1, kraken_background_5, kraken_background_6,
         kraken_background_7, kraken_background_8, kraken_background_9, kraken_background_10
     ]
+    kraken_lightnings = [kraken_background_2, kraken_background_3,
+    kraken_background_4,]
     player.rect.center = (100, 300)
     pygame.display.flip()
 
@@ -387,11 +397,12 @@ wizard_fight_start_time = None
 kraken_fight_start_time = None
 last_kraken_frame_change = 0
 kraken_backgrounds = [
-    kraken_background_1, kraken_background_2, kraken_background_3,
-    kraken_background_4, kraken_background_5, kraken_background_6,
+    kraken_background_1, kraken_background_5, kraken_background_6,
     kraken_background_7, kraken_background_8, kraken_background_9,
     kraken_background_10
 ]
+kraken_lightnings = [kraken_background_2, kraken_background_3,
+    kraken_background_4,]
 kraken_bg = kraken_backgrounds[0]
 boats_group = pygame.sprite.Group()
 jellyfish_group = pygame.sprite.Group()
@@ -443,6 +454,7 @@ while running:
                             break
 
     if menu:
+        forklift_activated = False
         if boss:
             pygame.mixer.music.stop()
             pygame.mixer.music.unload()
@@ -621,6 +633,22 @@ while running:
                     screen.blit(robot_background_2, (0, 0))
                 else:
                     screen.blit(robot_background_1, (0, 0))
+                
+                if not forklift_activated:
+                    offset = (player.rect.x - forklift_off_pos[0], player.rect.y - forklift_off_pos[1])
+                    if forklift_off_mask.overlap(player.mask, offset):
+                        if forklift_touch_start is None:
+                            forklift_touch_start = time.time()  # start counting
+                        elif time.time() - forklift_touch_start >= forklift_time_required:  # e.g., 10 seconds
+                            forklift_activated = True  # mark activated
+                            current_forklift_image = forklift_on
+                    else:
+                        forklift_touch_start = None
+                
+                if forklift_activated:
+                    screen.blit(forklift_on, (0, -19.5))
+                else:
+                    screen.blit(forklift_off, (0, -19.5))
 
                 if blinking and blink_on:
                     # Blink vertical lasers (full height)
@@ -671,7 +699,14 @@ while running:
             else:
                 # Update background every ~1 seconds
                 if now - last_kraken_frame_change > 1:
-                    kraken_bg = random.choice(kraken_backgrounds)
+                    bg_check = random.randint(1, 15)
+                    if bg_check == 7:
+                        kraken_bg = random.choice(kraken_lightnings)
+                        thunder = pygame.mixer.Sound("assets/music/thunder.mp3")
+                        thunder.set_volume(0.6)
+                        thunder.play()
+                    else:
+                        kraken_bg = random.choice(kraken_backgrounds)
                     last_kraken_frame_change = now
 
                 screen.blit(kraken_bg, (0, 0))
