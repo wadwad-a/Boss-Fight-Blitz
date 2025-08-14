@@ -178,9 +178,9 @@ class Player(pygame.sprite.Sprite):
 # hover effect
 menu = True
 current_battle = None
-kraken_rect = kraken_icon.get_rect(topleft=(500, 200))
-robot_rect = robot_icon.get_rect(topleft=(100, 200))
-wizard_rect = wizard_icon.get_rect(topleft=(300, 200))
+kraken_rect = kraken_icon.get_rect(topleft=(500, 120))
+robot_rect = robot_icon.get_rect(topleft=(100, 120))
+wizard_rect = wizard_icon.get_rect(topleft=(300, 120))
 
 visible_count = 8
 player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon]
@@ -196,13 +196,13 @@ left_icon_mask = pygame.mask.from_surface(left_icon)
 right_icon_mask = pygame.mask.from_surface(right_icon)
 scroll_index = 0
 arrow_offset = 20
-left_icon_rect = left_icon.get_rect(topleft=(start_x - icon_size - arrow_offset, 420))
-right_icon_rect = right_icon.get_rect(topleft=(start_x + total_width + arrow_offset, 420))
+left_icon_rect = left_icon.get_rect(topleft=(start_x - icon_size - arrow_offset, 450))
+right_icon_rect = right_icon.get_rect(topleft=(start_x + total_width + arrow_offset, 450))
 first_visible_index = 0
 player_rects = []
 for i in range(visible_count):
     x = start_x + i * (icon_size + spacing)
-    player_rects.append(pygame.Rect(x, 420, icon_size, icon_size))
+    player_rects.append(pygame.Rect(x, 450, icon_size, icon_size))
 
 def hover(icon):
     dark = icon.copy()
@@ -450,6 +450,10 @@ lobby = False
 running = True
 counter = 60
 text_die = ""
+normal_rect = pygame.Rect(195, 300, 200, 50)
+random_rect = pygame.Rect(405, 300, 200, 50)
+mode_selected = "normal"
+random_event = False
 konami_code = [
     pygame.K_UP, pygame.K_UP,
     pygame.K_DOWN, pygame.K_DOWN,
@@ -483,6 +487,15 @@ while running:
             if time.time() - popup_dismissed_time < click_immunity_duration:
                 continue
             mouse = pygame.mouse.get_pos()
+
+            if normal_rect.collidepoint(mouse):
+                mode_selected = "normal"
+                random_event = False
+                pygame.mixer.Sound("assets/music/select.mp3").play()
+            elif random_rect.collidepoint(mouse):
+                mode_selected = "random"
+                random_event = True
+                pygame.mixer.Sound("assets/music/select.mp3").play()
 
             # Right arrow → shift icons left
             if is_mouse_over_icon(mouse, right_icon_rect, right_icon_mask):
@@ -554,7 +567,24 @@ while running:
             player_text = ithaca_player.render("Player Select", True, (0, 0, 0))
 
         screen.blit(level_text, (153, 25))
-        screen.blit(player_text, (200, 320))
+        screen.blit(player_text, (200, 350))
+
+        if mode_selected == "normal":
+            pygame.draw.rect(screen, (255, 255, 255), normal_rect)
+            normal_text = ithaca_hover.render("Normal Mode", True, (0, 0, 0))
+        else:
+            pygame.draw.rect(screen, (0, 0, 0), normal_rect)
+            normal_text = ithaca_hover.render("Normal Mode", True, (255, 255, 255))
+        screen.blit(normal_text, normal_text.get_rect(center=normal_rect.center))
+
+        # Draw Random Event Mode rectangle
+        if mode_selected == "random":
+            pygame.draw.rect(screen, (255, 255, 255), random_rect)
+            random_text_surf = ithaca_hover.render("Random Event Mode", True, (0, 0, 0))
+        else:
+            pygame.draw.rect(screen, (0, 0, 0), random_rect)
+            random_text_surf = ithaca_hover.render("Random Event Mode", True, (255, 255, 255))
+        screen.blit(random_text_surf, random_text_surf.get_rect(center=random_rect.center))
 
         counter += 1
 
@@ -563,19 +593,19 @@ while running:
 
         # Level select icons hover
         if is_mouse_over_icon(mouse, kraken_rect, kraken_mask):
-            screen.blit(kraken_dark, (500, 150))
+            screen.blit(kraken_dark, (500, 120))
         else:
-            screen.blit(kraken_icon, (500, 150))
+            screen.blit(kraken_icon, (500, 120))
 
         if is_mouse_over_icon(mouse, robot_rect, robot_mask):
-            screen.blit(robot_dark, (100, 150))
+            screen.blit(robot_dark, (100, 120))
         else:
-            screen.blit(robot_icon, (100, 150))
+            screen.blit(robot_icon, (100, 120))
 
         if is_mouse_over_icon(mouse, wizard_rect, wizard_mask):
-            screen.blit(wizard_dark, (300, 150))
+            screen.blit(wizard_dark, (300, 120))
         else:
-            screen.blit(wizard_icon, (300, 150))
+            screen.blit(wizard_icon, (300, 120))
 
         # Draw left/right arrows
         screen.blit(left_icon, left_icon_rect.topleft)
@@ -609,13 +639,13 @@ while running:
 
         if hovered_index is not None:
             idx = (first_visible_index + hovered_index) % len(player_icons)
-            text_area_rect = pygame.Rect(0, 500, 800, 80)
+            text_area_rect = pygame.Rect(0, 530, 800, 80)
             screen.fill((r, g, b), text_area_rect)
             color = (255, 255, 255) if r < 128 and g < 128 else (0, 0, 0)
             name_surf = ithaca_hover.render(player_names[idx], True, color)
             desc_surf = ithaca_desc.render(player_descs[idx], True, color)
-            name_rect = name_surf.get_rect(center=(400, 510))
-            desc_rect = desc_surf.get_rect(center=(400, 545))
+            name_rect = name_surf.get_rect(center=(400, 540))
+            desc_rect = desc_surf.get_rect(center=(400, 575))
             screen.blit(name_surf, name_rect)
             screen.blit(desc_surf, desc_rect)
 
@@ -633,8 +663,10 @@ while running:
                 text_desc = ithaca_hover.render(text_die, True, text_color)
                 text_rect1 = text_desc.get_rect(center=(400, 400))
                 screen.blit(text_desc, text_rect1)
+        level_progress = 0
     else:
         if current_battle == "robot":
+            level_progress += (1/3680)
             death = 0
             robocount += 0.05
             elapsed = time.time() - robot_fight_start_time
@@ -644,13 +676,13 @@ while running:
                 current_battle = None
                 show_win_popup = True
                 show_death_popup = False
-                player_icons[5] = raspberry_icon
-                player_names[5] = "Raspberry Pi(e)"
-                rwincount += 1
                 elapsed = 0
-                if rwincount == 5:
+                if random_event:
                     player_icons[13] = breadboard_icon
                     player_names[13] = "Bread-board"
+                else:
+                    player_icons[5] = raspberry_icon
+                    player_names[5] = "Raspberry Pi(e)"
                 laser_group.empty()
             else:
                 now = time.time()
@@ -758,6 +790,7 @@ while running:
                     for y in horizontal_blink_positions:
                         screen.blit(horizontal_blink_image, (0, y - 25))
 
+
                 elif laser_active:
                     laser_group.draw(screen)
                     if not laser_ex:
@@ -765,6 +798,11 @@ while running:
                         laser_sound.set_volume(1.0)
                         laser_sound.play()
                     laser_ex = True
+
+                bar_width = int(600 * level_progress)
+                bar_height = 10
+                pygame.draw.rect(screen, (200, 200, 200), (100, 35, 600, bar_height))
+                pygame.draw.rect(screen, (0, 255, 0), (100, 35, bar_width, bar_height))
 
                 screen.blit(player.image, player.rect)
 
@@ -797,6 +835,7 @@ while running:
 
 
         elif current_battle == "kraken":
+            level_progress += (1/3285)
             death = 0
             elapsed = time.time() - kraken_fight_start_time
             now = time.time()
@@ -806,15 +845,16 @@ while running:
                 current_battle = None
                 show_win_popup = True
                 show_death_popup = False
-                player_icons[7] = treasure_icon
-                player_names[7] = "Treasure Chest"
                 boats_group.empty()
                 jellyfish_group.empty()
                 kwincount += 1
                 elapsed = 0
-                if kwincount == 5:
+                if random_event:
                     player_icons[15] = helm_icon
                     player_names[15] = "Ship's Helm"
+                else:
+                    player_icons[7] = treasure_icon
+                    player_names[7] = "Treasure Chest"
 
             else:
                 # Update background every ~1 seconds
@@ -847,7 +887,7 @@ while running:
                     jellyfish_sequence_active = True
                     launch_times = [now + i * 0.5 for i in range(6)]
                     for idx, launch_time in zip(sequence, launch_times):
-                        x_pos = 65 + idx * ((800 - 130) / 5)
+                        x_pos = random.randint(0, 130) + idx * ((800 - 130) / 5)
                         jellyfish_sprite = Jellyfish(x_pos, launch_time)
                         jellyfish_group.add(jellyfish_sprite)
                 if jellyfish_sequence_active and len(jellyfish_group) == 0:
@@ -858,6 +898,11 @@ while running:
 
                 boats_group.draw(screen)
                 jellyfish_group.draw(screen)
+
+                bar_width = int(600 * level_progress)
+                bar_height = 10
+                pygame.draw.rect(screen, (200, 200, 200), (100, 35, 600, bar_height))
+                pygame.draw.rect(screen, (0, 255, 0), (100, 35, bar_width, bar_height))
 
                 keys = pygame.key.get_pressed()
                 player.update(keys)
@@ -958,6 +1003,7 @@ while running:
                         del player.water_touch_start
 
         elif current_battle == "wizard":
+            level_progress += (1/3080)
             death = 0
             wizcount += 0.05
             elapsed = time.time() - wizard_fight_start_time
@@ -970,13 +1016,14 @@ while running:
                 wizard_projectiles.empty()
                 show_win_popup = True
                 show_death_popup = False
-                player_icons[6] = orb_icon
-                player_names[6] = "Magic Orb"
                 wwincount += 1
                 elapsed = 0
-                if wwincount == 5:
+                if random_event:
                     player_icons[14] = emerald_icon
                     player_names[14] = "Emerald Core"
+                else:
+                    player_icons[6] = orb_icon
+                    player_names[6] = "Magic Orb"
             else:
                 # Spawn new wands every 3 seconds only if no projectiles on screen
                 if now - last_wand_spawn_time > 3 and len(wizard_projectiles) == 0:
@@ -1079,7 +1126,10 @@ while running:
                 for wand_sprite in wizard_wands:
                     screen.blit(wand_sprite.image, wand_sprite.rect)
 
-                
+                bar_width = int(600 * level_progress)
+                bar_height = 10
+                pygame.draw.rect(screen, (200, 200, 200), (100, 35, 600, bar_height))
+                pygame.draw.rect(screen, (0, 255, 0), (100, 35, bar_width, bar_height))
 
                 keys = pygame.key.get_pressed()
                 player.update(keys)
