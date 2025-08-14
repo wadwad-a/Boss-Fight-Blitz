@@ -878,7 +878,6 @@ while running:
                 show_death_popup = False
                 boats_group.empty()
                 jellyfish_group.empty()
-                kwincount += 1
                 elapsed = 0
                 if random_event:
                     player_icons[15] = helm_icon
@@ -1079,7 +1078,6 @@ while running:
                 wizard_projectiles.empty()
                 show_win_popup = True
                 show_death_popup = False
-                wwincount += 1
                 elapsed = 0
                 if random_event:
                     player_icons[14] = emerald_icon
