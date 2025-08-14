@@ -68,6 +68,12 @@ dice_icon = pygame.image.load("assets/icons/dice.png")
 dice_icon = pygame.transform.scale(dice_icon, (50, 50))
 wheel_icon = pygame.image.load("assets/icons/wheel.png")
 wheel_icon = pygame.transform.scale(wheel_icon, (50, 50))
+right_icon = pygame.image.load("assets/icons/right.png")
+right_icon = pygame.transform.scale(right_icon, (50, 50))
+left_icon = pygame.image.load("assets/icons/left.png")
+left_icon = pygame.transform.scale(left_icon, (50, 50))
+lock_icon = pygame.image.load("assets/icons/lock.png")
+lock_icon = pygame.transform.scale(lock_icon, (50, 50))
 
 # fonts
 ithaca_level = pygame.font.Font("assets/fonts/ithaca-LVB75.ttf", 128)
@@ -176,19 +182,27 @@ kraken_rect = kraken_icon.get_rect(topleft=(500, 200))
 robot_rect = robot_icon.get_rect(topleft=(100, 200))
 wizard_rect = wizard_icon.get_rect(topleft=(300, 200))
 
-player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon]
-player_names = ["Smiley", "Cookie", "Crazy", "Heart", "Penny", "???", "???", "???", "???", "???"]
-player_descs = ["default", "yum", "what", "quite lovely", "woah i'm rich", "power down robot", "steal wizard\'s magic", "send kraken back to cave", "turn into a flaming chicken", "get every player"]
+visible_count = 8
+player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon]
+player_names = ["Smiley", "Cookie", "Crazy", "Heart", "Penny", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???"]
+player_descs = ["default", "yum", "what", "quite lovely", "woah i'm rich", "power down robot", "steal wizard\'s magic", "send kraken back to cave", "turn into a flaming chicken", "get every player",
+                "ouch", "ouch x10", "ouch x100", "power down robot x5", "steal wizard\'s magic x5", "send kraken back to cave x5", "don't drown!", "so close...", "begin construction", "legend says there's a secret code"]
 icon_size = 50
 spacing = 30  # space between icons
 num_icons = len(player_icons)
-total_width = num_icons * icon_size + (num_icons - 1) * spacing
+total_width = visible_count * icon_size + (visible_count - 1) * spacing
 start_x = (800 - total_width) // 2  # 800 is the screen width
-
+left_icon_mask = pygame.mask.from_surface(left_icon)
+right_icon_mask = pygame.mask.from_surface(right_icon)
+scroll_index = 0
+arrow_offset = 20
+left_icon_rect = left_icon.get_rect(topleft=(start_x - icon_size - arrow_offset, 420))
+right_icon_rect = right_icon.get_rect(topleft=(start_x + total_width + arrow_offset, 420))
+first_visible_index = 0
 player_rects = []
-for i in range(num_icons):
+for i in range(visible_count):
     x = start_x + i * (icon_size + spacing)
-    player_rects.append(player_icons[i].get_rect(topleft=(x, 420)))
+    player_rects.append(pygame.Rect(x, 420, icon_size, icon_size))
 
 def hover(icon):
     dark = icon.copy()
@@ -217,6 +231,7 @@ laser_positions = []
 forklift_touch_start = None
 forklift_activated = False
 forklift_time_required = 10
+death_count = 0
 
 # Wand and projectile classes (unchanged)
 class Wand(pygame.sprite.Sprite):
@@ -427,16 +442,35 @@ jellyfish_group = pygame.sprite.Group()
 jellyfish_sequence_active = False
 
 # game loop
+rwincount = 0
+kwincount = 0
+wwincount = 0
 boss = False
 lobby = False
 running = True
 counter = 60
 text_die = ""
+konami_code = [
+    pygame.K_UP, pygame.K_UP,
+    pygame.K_DOWN, pygame.K_DOWN,
+    pygame.K_LEFT, pygame.K_RIGHT,
+    pygame.K_LEFT, pygame.K_RIGHT,
+    pygame.K_b, pygame.K_a
+]
+
+konami_buffer = []
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYUP:
+            konami_buffer.append(event.key)
+            if len(konami_buffer) > len(konami_code):
+                konami_buffer.pop(0)
+            if konami_buffer == konami_code:
+                player_names[19] = "Mystery"
+                konami_buffer = []
 
         if menu and (show_death_popup or show_win_popup):
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -449,6 +483,20 @@ while running:
             if time.time() - popup_dismissed_time < click_immunity_duration:
                 continue
             mouse = pygame.mouse.get_pos()
+
+            # Right arrow → shift icons left
+            if is_mouse_over_icon(mouse, right_icon_rect, right_icon_mask):
+                first_visible_index = (first_visible_index + 1) % len(player_icons)
+                pygame.mixer.Sound("assets/music/arrow.mp3").play()
+                continue
+
+            # Left arrow → shift icons right
+            elif is_mouse_over_icon(mouse, left_icon_rect, left_icon_mask):
+                first_visible_index = (first_visible_index - 1) % len(player_icons)
+                pygame.mixer.Sound("assets/music/arrow.mp3").play()
+                continue
+
+            # Level select icons
             if is_mouse_over_icon(mouse, kraken_rect, kraken_mask):
                 kraken_battle()
             elif is_mouse_over_icon(mouse, robot_rect, robot_mask):
@@ -456,9 +504,11 @@ while running:
             elif is_mouse_over_icon(mouse, wizard_rect, wizard_mask):
                 wizard_battle()
             else:
+                # Player icon clicks
                 for i, rect in enumerate(player_rects):
                     if rect.collidepoint(mouse):
-                        if player_names[i] == "???":
+                        idx = (first_visible_index + i) % len(player_icons)
+                        if player_names[idx] == "???":
                             deny_sound = pygame.mixer.Sound("assets/music/deny.mp3")
                             deny_sound.set_volume(0.4)
                             deny_sound.play()
@@ -466,7 +516,7 @@ while running:
                         else:
                             select_sound = pygame.mixer.Sound("assets/music/select.mp3")
                             select_sound.play()
-                            selected_player = i
+                            selected_player = idx
                             player.image = player_icons[selected_player]
                             player.rect = player.image.get_rect(center=player.rect.center)
                             break
@@ -488,10 +538,14 @@ while running:
             b = random.randint(0, 255)
 
         screen.fill((r, g, b))
-        if (player_icons[5] == raspberry_icon and player_icons[6] == orb_icon and player_icons[7] == treasure_icon and player_icons[8] == chicken_icon):
+
+        # Unlock special icon logic
+        if (player_icons[5] == raspberry_icon and player_icons[6] == orb_icon and
+            player_icons[7] == treasure_icon and player_icons[8] == chicken_icon):
             player_icons[9] = gold_icon
             player_names[9] = "Gold Medal"
 
+        # Level & Player Select texts
         if r < 128 and g < 128:
             level_text = ithaca_level.render("Level Select", True, (255, 255, 255))
             player_text = ithaca_player.render("Player Select", True, (255, 255, 255))
@@ -507,7 +561,7 @@ while running:
         # menu hover
         mouse = pygame.mouse.get_pos()
 
-        # Level select icons and hover
+        # Level select icons hover
         if is_mouse_over_icon(mouse, kraken_rect, kraken_mask):
             screen.blit(kraken_dark, (500, 150))
         else:
@@ -523,13 +577,28 @@ while running:
         else:
             screen.blit(wizard_icon, (300, 150))
 
-        # Player select icons
-        for i, icon in enumerate(player_icons):
+        # Draw left/right arrows
+        screen.blit(left_icon, left_icon_rect.topleft)
+        screen.blit(right_icon, right_icon_rect.topleft)
+
+        # Draw visible player icons
+        screen.blit(left_icon, left_icon_rect.topleft)
+        screen.blit(right_icon, right_icon_rect.topleft)
+
+        # Draw visible icons
+        for i in range(visible_count):
+            idx = (first_visible_index + i) % len(player_icons)
             pos = player_rects[i].topleft
-            if i == selected_player:
+            if idx == selected_player:
                 center = (pos[0] + 25, pos[1] + 25)
                 pygame.draw.circle(screen, (255-r, 255-g, 255-b), center, 35)
-            screen.blit(icon, pos)
+            screen.blit(player_icons[idx], pos)
+            if player_names[idx] == "???":
+                lock_pos = (
+                    pos[0] + player_icons[i].get_width() - lock_icon.get_width() + 20,
+                    pos[1] - 20
+                )
+                screen.blit(lock_icon, lock_pos)  
 
         # Show hovered player name and description
         hovered_index = None
@@ -539,16 +608,18 @@ while running:
                 break
 
         if hovered_index is not None:
+            idx = (first_visible_index + hovered_index) % len(player_icons)
             text_area_rect = pygame.Rect(0, 500, 800, 80)
             screen.fill((r, g, b), text_area_rect)
-            color = (255, 255, 255) if r < 75 and g < 75 else (0, 0, 0)
-            name_surf = ithaca_hover.render(player_names[hovered_index], True, color)
-            desc_surf = ithaca_desc.render(player_descs[hovered_index], True, color)
+            color = (255, 255, 255) if r < 128 and g < 128 else (0, 0, 0)
+            name_surf = ithaca_hover.render(player_names[idx], True, color)
+            desc_surf = ithaca_desc.render(player_descs[idx], True, color)
             name_rect = name_surf.get_rect(center=(400, 510))
             desc_rect = desc_surf.get_rect(center=(400, 545))
             screen.blit(name_surf, name_rect)
             screen.blit(desc_surf, desc_rect)
 
+        # Popups
         if show_death_popup or show_win_popup:
             overlay = pygame.Surface((800, 600), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 180))
@@ -564,6 +635,7 @@ while running:
                 screen.blit(text_desc, text_rect1)
     else:
         if current_battle == "robot":
+            death = 0
             robocount += 0.05
             elapsed = time.time() - robot_fight_start_time
 
@@ -574,6 +646,11 @@ while running:
                 show_death_popup = False
                 player_icons[5] = raspberry_icon
                 player_names[5] = "Raspberry Pi(e)"
+                rwincount += 1
+                elapsed = 0
+                if rwincount == 5:
+                    player_icons[13] = breadboard_icon
+                    player_names[13] = "Bread-board"
                 laser_group.empty()
             else:
                 now = time.time()
@@ -665,6 +742,8 @@ while running:
                 
                 if forklift_activated:
                     screen.blit(forklift_on, (0, -19.5))
+                    player_names[18] = "Wheel"
+                    player_icons[18] = wheel_icon
                 else:
                     screen.blit(forklift_off, (0, -19.5))
 
@@ -699,8 +778,26 @@ while running:
                         laserChoice = ["very hot Laser", "inconsiderate Laser", "powerful Light Source"]
                         laserChoice2 = ["bullied", "fried", "cooked", "deep-fried", "ended", "scalded", "obliterated"]
                         text_die = f"Player was {random.choice(laserChoice2)} by {random.choice(laserChoice)}."
+                        if death == 0:
+                            death += 1
+                            death_count += 1
+                            die = False
+                            if death_count == 1:
+                                player_names[10] = "Fire"
+                                player_icons[10] = fire_icon
+                            elif death_count == 10:
+                                player_names[11] = "Explosion"
+                                player_icons[11] = explosion_icon
+                            elif death_count == 100:
+                                player_names[11] = "Volcano"
+                                player_icons[11] = volcano_icon
+                        if elapsed > 58:
+                            player_names[17] = "Dice"
+                            player_icons[17] = dice_icon
+
 
         elif current_battle == "kraken":
+            death = 0
             elapsed = time.time() - kraken_fight_start_time
             now = time.time()
 
@@ -713,7 +810,12 @@ while running:
                 player_names[7] = "Treasure Chest"
                 boats_group.empty()
                 jellyfish_group.empty()
-                
+                kwincount += 1
+                elapsed = 0
+                if kwincount == 5:
+                    player_icons[15] = helm_icon
+                    player_names[15] = "Ship's Helm"
+
             else:
                 # Update background every ~1 seconds
                 if now - last_kraken_frame_change > 1:
@@ -773,6 +875,22 @@ while running:
                     adjKraken = ["large", "massive", "formidable", "unforgiving", "rude"]
                     boatKraken = ["Boat", "Ship", "Vessel", "Sailboat"]
                     text_die = f"Player {random.choice(hitKraken)} {random.choice(adjKraken)} {random.choice(boatKraken)}."
+                    if death == 0:
+                        death += 1
+                        death_count += 1
+                        die = False
+                        if death_count == 1:
+                            player_names[10] = "Fire"
+                            player_icons[10] = fire_icon
+                        elif death_count == 10:
+                            player_names[11] = "Explosion"
+                            player_icons[11] = explosion_icon
+                        elif death_count == 100:
+                            player_names[11] = "Volcano"
+                            player_icons[11] = volcano_icon
+                    if elapsed > 52:
+                            player_names[17] = "Dice"
+                            player_icons[17] = dice_icon
 
                 if pygame.sprite.spritecollideany(player, jellyfish_group, collided=pygame.sprite.collide_mask):
                     menu = True
@@ -784,12 +902,33 @@ while running:
                     actionKraken = ["was stung by", "was mauled by", "was crushed by", "was poisoned by", "was hugged too hard by"]
                     jellyKraken = ["rude", "unkind", "mean", "angry", "irritated", "annoyed", "confused", "malicious"]
                     text_die = f"Player {random.choice(actionKraken)} {random.choice(jellyKraken)} Jellyfish."
+                    if death == 0:
+                        death += 1
+                        death_count += 1
+                        die = False
+                        if death_count == 1:
+                            player_names[10] = "Fire"
+                            player_icons[10] = fire_icon
+                        elif death_count == 10:
+                            player_names[11] = "Explosion"
+                            player_icons[11] = explosion_icon
+                        elif death_count == 100:
+                            player_names[11] = "Volcano"
+                            player_icons[11] = volcano_icon
+                    if elapsed > 52:
+                            player_names[17] = "Dice"
+                            player_icons[17] = dice_icon
                 
                 offset = (int(player.rect.x - water_rect.x), int(player.rect.y - water_rect.y))
                 if water_mask.overlap(player.mask, offset):
                     if not hasattr(player, "water_touch_start"):
                         player.water_touch_start = time.time()
-                    elif time.time() - player.water_touch_start >= 1.5:
+                    if time.time() - player.water_touch_start >= 1.25:
+                        player_names[16] = "Lifesaver Buoy"
+                        player_icons[16] = lifesaver_icon
+                    if time.time() - player.water_touch_start >= 1.5:
+                        player_names[16] = "???"
+                        player_icons[16] = unknown_icon
                         menu = True
                         current_battle = None
                         show_death_popup = True
@@ -798,11 +937,28 @@ while running:
                         jellyfish_group.empty()
                         drownText = ["Player was drowned in the water by Kraken.", "Player was taken under the waves by Kraken.", "Player could not breathe underwater.", "Player forgot how to swim.", "Player got swept away by a rip current.", "Player couldn't tread water.", "Player was lost at sea."]
                         text_die = random.choice(drownText)
+                        if death == 0:
+                            death += 1
+                            death_count += 1
+                            die = False
+                            if death_count == 1:
+                                player_names[10] = "Fire"
+                                player_icons[10] = fire_icon
+                            elif death_count == 10:
+                                player_names[11] = "Explosion"
+                                player_icons[11] = explosion_icon
+                            elif death_count == 100:
+                                player_names[11] = "Volcano"
+                                player_icons[11] = volcano_icon
+                        if elapsed > 52:
+                            player_names[17] = "Dice"
+                            player_icons[17] = dice_icon
                 else:
                     if hasattr(player, "water_touch_start"):
                         del player.water_touch_start
 
         elif current_battle == "wizard":
+            death = 0
             wizcount += 0.05
             elapsed = time.time() - wizard_fight_start_time
             now = time.time()
@@ -816,6 +972,11 @@ while running:
                 show_death_popup = False
                 player_icons[6] = orb_icon
                 player_names[6] = "Magic Orb"
+                wwincount += 1
+                elapsed = 0
+                if wwincount == 5:
+                    player_icons[14] = emerald_icon
+                    player_names[14] = "Emerald Core"
             else:
                 # Spawn new wands every 3 seconds only if no projectiles on screen
                 if now - last_wand_spawn_time > 3 and len(wizard_projectiles) == 0:
@@ -934,6 +1095,22 @@ while running:
                     wizard_projectiles.empty()
                     wandChoice = ["smacked", "bopped", "whacked", "bonked", "knocked out", "hit", "slapped", "dinked"]
                     text_die = f"Player was {random.choice(wandChoice)} by Wand."
+                    if death == 0:
+                        death += 1
+                        death_count += 1
+                        die = False
+                        if death_count == 1:
+                            player_names[10] = "Fire"
+                            player_icons[10] = fire_icon
+                        elif death_count == 10:
+                            player_names[11] = "Explosion"
+                            player_icons[11] = explosion_icon
+                        elif death_count == 100:
+                            player_names[11] = "Volcano"
+                            player_icons[11] = volcano_icon
+                    if elapsed > 46:
+                            player_names[17] = "Dice"
+                            player_icons[17] = dice_icon
 
                 # Collision with projectiles (only after 0.15s) ends battle
                 for proj in wizard_projectiles:
@@ -955,6 +1132,22 @@ while running:
                             randomText = random.choice(magicText)
                         transformText = ["was magically transformed into", "was turned into", "somehow became"]
                         text_die = f"Player {random.choice(transformText)} {randomText}."
+                        if death == 0:
+                            death += 1
+                            death_count += 1
+                            die = False
+                            if death_count == 1:
+                                player_names[10] = "Fire"
+                                player_icons[10] = fire_icon
+                            elif death_count == 10:
+                                player_names[11] = "Explosion"
+                                player_icons[11] = explosion_icon
+                            elif death_count == 100:
+                                player_names[11] = "Volcano"
+                                player_icons[11] = volcano_icon
+                        if elapsed > 46:
+                            player_names[17] = "Dice"
+                            player_icons[17] = dice_icon
                         break
 
 
