@@ -186,7 +186,7 @@ visible_count = 8
 player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon]
 player_names = ["Smiley", "Cookie", "Crazy", "Heart", "Penny", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???"]
 player_descs = ["default", "yum", "what", "quite lovely", "woah i'm rich", "power down robot", "steal wizard\'s magic", "send kraken back to cave", "turn into a flaming chicken", "get every player",
-                "ouch", "ouch x10", "ouch x100", "power down robot x5", "steal wizard\'s magic x5", "send kraken back to cave x5", "don't drown!", "so close...", "begin construction", "legend says there's a secret code"]
+                "ouch", "ouch x10", "ouch x100", "power down robot with random events", "steal wizard\'s magic with random events", "send kraken back to cave with random events", "don't drown!", "so close...", "begin construction", "legend says there's a secret code"]
 icon_size = 50
 spacing = 30  # space between icons
 num_icons = len(player_icons)
@@ -461,7 +461,6 @@ konami_code = [
     pygame.K_LEFT, pygame.K_RIGHT,
     pygame.K_b, pygame.K_a
 ]
-
 konami_buffer = []
 
 while running:
@@ -535,6 +534,9 @@ while running:
                             break
 
     if menu:
+        measure = 50
+        player.speed = 5
+        player.image = pygame.transform.scale(player.image, (50, 50))
         forklift_activated = False
         if boss:
             pygame.mixer.music.stop()
@@ -903,6 +905,37 @@ while running:
                 bar_height = 10
                 pygame.draw.rect(screen, (200, 200, 200), (100, 35, 600, bar_height))
                 pygame.draw.rect(screen, (0, 255, 0), (100, 35, bar_width, bar_height))
+
+
+                if random_event:
+                    old_center = player.rect.center
+                    randomCheck = random.randint(1, 360)
+                    if randomCheck == 23:
+                        randomChoice = random.choice([1, 2, 3, 4, 5, 6])
+                        if randomChoice == 1 and player.speed != 10:
+                            player.speed = 10
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 2 and player.speed != 2.5:
+                            player.speed = 2.5
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 3 and player.speed != 5:
+                            player.speed = 5
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 4 and measure != 50:
+                            measure = 50
+                            player.image = pygame.transform.scale(player.image, (measure, measure))
+                            player.rect = player.image.get_rect(center=old_center)
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 5 and measure != 25:
+                            measure = 25
+                            player.image = pygame.transform.scale(player.image, (measure, measure))
+                            player.rect = player.image.get_rect(center=old_center)
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
+                        elif randomChoice == 6 and measure != 100:
+                            measure = 100
+                            player.image = pygame.transform.scale(player.image, (measure, measure))
+                            player.rect = player.image.get_rect(center=old_center)
+                            pygame.mixer.Sound("assets/music/event.mp3").play()
 
                 keys = pygame.key.get_pressed()
                 player.update(keys)
