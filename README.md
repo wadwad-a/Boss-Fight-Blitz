@@ -21,7 +21,7 @@ Choose your boss, dodge attacks, and unlock every single player by completing cr
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/boss-battle-blitz.git
+git clone https://github.com/wadwad-a/boss-battle-blitz.git
 cd boss-battle-blitz
 ```
 ### 2. Install dependencies
@@ -42,7 +42,6 @@ python main.py
 | Key        | Action              |
 |------------|--------------------|
 | **Arrow Keys / WASD** | Move player |
-| **Space**  | Attack (if available) |
 | **Esc**    | Quit game |
 
 ---
