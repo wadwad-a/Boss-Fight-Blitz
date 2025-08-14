@@ -154,7 +154,7 @@ wizard_rect = wizard_icon.get_rect(topleft=(300, 200))
 
 player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon]
 player_names = ["Smiley", "Cookie", "Crazy", "Heart", "Penny", "???", "???", "???", "???", "???"]
-player_descs = ["default", "yum", "what", "quite lovely", "woah i'm rich", "beat robot", "beat wizard", "beat kraken", "turn into a flaming chicken", "get every player"]
+player_descs = ["default", "yum", "what", "quite lovely", "woah i'm rich", "power down robot", "steal wizard\'s magic", "send kraken back to cave", "turn into a flaming chicken", "get every player"]
 icon_size = 50
 spacing = 30  # space between icons
 num_icons = len(player_icons)
