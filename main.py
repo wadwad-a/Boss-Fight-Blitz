@@ -183,7 +183,7 @@ wizard_rect = wizard_icon.get_rect(topleft=(300, 120))
 visible_count = 8
 player_icons = [smiley_icon, cookie_icon, crazy_icon, heart_icon, penny_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon, unknown_icon]
 player_names = ["Smiley", "Cookie", "Crazy", "Heart", "Penny", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???"]
-player_descs = ["default", "yum", "what", "quite lovely", "woah i'm rich", "power down robot", "steal wizard\'s magic", "send kraken back to cave", "turn into a flaming chicken", "get every player",
+player_descs = ["default", "yum", "what", "quite lovely", "woah i'm rich", "power down robot", "steal wizard\'s magic", "send kraken back to cave", "turn into a flaming chicken", "get all other players",
                 "ouch", "ouch x10", "ouch x100", "power down robot with random events", "steal wizard\'s magic with random events", "send kraken back to cave with random events", "don't drown!", "so close...", "begin construction", "legend says there's a secret code"]
 icon_size = 50
 spacing = 30  # space between icons
@@ -443,6 +443,7 @@ jellyfish_group = pygame.sprite.Group()
 jellyfish_sequence_active = False
 
 # game loop
+buoy = False
 boss = False
 lobby = False
 running = True
@@ -544,6 +545,8 @@ while running:
             pygame.mixer.music.load("assets/music/miffy_cafe.mp3")
             pygame.mixer.music.play(loops=-1)
         lobby = True
+        if player_names[16] == "Lifesaver Buoy":
+            buoy = True
 
         if counter % 60 == 0:
             r = random.randint(0, 255)
@@ -553,8 +556,7 @@ while running:
         screen.fill((r, g, b))
 
         # Unlock special icon logic
-        if (player_icons[5] == raspberry_icon and player_icons[6] == orb_icon and
-            player_icons[7] == treasure_icon and player_icons[8] == chicken_icon):
+        if player_names.count("???") == 1:
             player_icons[9] = gold_icon
             player_names[9] = "Gold Medal"
 
@@ -858,8 +860,8 @@ while running:
                                 player_names[11] = "Explosion"
                                 player_icons[11] = explosion_icon
                             elif death_count == 100:
-                                player_names[11] = "Volcano"
-                                player_icons[11] = volcano_icon
+                                player_names[12] = "Volcano"
+                                player_icons[12] = volcano_icon
                         if elapsed > 58:
                             player_names[17] = "Dice"
                             player_icons[17] = dice_icon
@@ -993,8 +995,8 @@ while running:
                             player_names[11] = "Explosion"
                             player_icons[11] = explosion_icon
                         elif death_count == 100:
-                            player_names[11] = "Volcano"
-                            player_icons[11] = volcano_icon
+                            player_names[12] = "Volcano"
+                            player_icons[12] = volcano_icon
                     if elapsed > 52:
                             player_names[17] = "Dice"
                             player_icons[17] = dice_icon
@@ -1020,8 +1022,8 @@ while running:
                             player_names[11] = "Explosion"
                             player_icons[11] = explosion_icon
                         elif death_count == 100:
-                            player_names[11] = "Volcano"
-                            player_icons[11] = volcano_icon
+                            player_names[12] = "Volcano"
+                            player_icons[12] = volcano_icon
                     if elapsed > 52:
                             player_names[17] = "Dice"
                             player_icons[17] = dice_icon
@@ -1034,8 +1036,9 @@ while running:
                         player_names[16] = "Lifesaver Buoy"
                         player_icons[16] = lifesaver_icon
                     if time.time() - player.water_touch_start >= 1.5:
-                        player_names[16] = "???"
-                        player_icons[16] = unknown_icon
+                        if not buoy:
+                            player_names[16] = "???"
+                            player_icons[16] = unknown_icon
                         menu = True
                         current_battle = None
                         show_death_popup = True
@@ -1055,8 +1058,8 @@ while running:
                                 player_names[11] = "Explosion"
                                 player_icons[11] = explosion_icon
                             elif death_count == 100:
-                                player_names[11] = "Volcano"
-                                player_icons[11] = volcano_icon
+                                player_names[12] = "Volcano"
+                                player_icons[12] = volcano_icon
                         if elapsed > 52:
                             player_names[17] = "Dice"
                             player_icons[17] = dice_icon
@@ -1193,7 +1196,6 @@ while running:
                 pygame.draw.rect(screen, (0, 255, 0), (100, 35, bar_width, bar_height))
 
                 if random_event:
-                    old_center = player.rect.center
                     current_size = player.image.get_width()
                     randomCheck = random.randint(1, 240)
                     if randomCheck == 23:
@@ -1210,17 +1212,17 @@ while running:
                         elif randomChoice == 4 and current_size != 50:
                             new_size = 50
                             player.image = pygame.transform.scale(player.image, (new_size, new_size))
-                            player.rect = player.image.get_rect(center=old_center)
+                            player.rect = player.image.get_rect(center=player.rect.center)
                             pygame.mixer.Sound("assets/music/event.mp3").play()
                         elif randomChoice == 5 and current_size != 25:
                             new_size = 25
                             player.image = pygame.transform.scale(player.image, (new_size, new_size))
-                            player.rect = player.image.get_rect(center=old_center)
+                            player.rect = player.image.get_rect(center=player.rect.center)
                             pygame.mixer.Sound("assets/music/event.mp3").play()
                         elif randomChoice == 6 and current_size != 100:
                             new_size = 100
                             player.image = pygame.transform.scale(player.image, (new_size, new_size))
-                            player.rect = player.image.get_rect(center=old_center)
+                            player.rect = player.image.get_rect(center=player.rect.center)
                             pygame.mixer.Sound("assets/music/event.mp3").play()
 
                 keys = pygame.key.get_pressed()
@@ -1248,8 +1250,8 @@ while running:
                             player_names[11] = "Explosion"
                             player_icons[11] = explosion_icon
                         elif death_count == 100:
-                            player_names[11] = "Volcano"
-                            player_icons[11] = volcano_icon
+                            player_names[12] = "Volcano"
+                            player_icons[12] = volcano_icon
                     if elapsed > 46:
                             player_names[17] = "Dice"
                             player_icons[17] = dice_icon
@@ -1285,8 +1287,8 @@ while running:
                                 player_names[11] = "Explosion"
                                 player_icons[11] = explosion_icon
                             elif death_count == 100:
-                                player_names[11] = "Volcano"
-                                player_icons[11] = volcano_icon
+                                player_names[12] = "Volcano"
+                                player_icons[12] = volcano_icon
                         if elapsed > 46:
                             player_names[17] = "Dice"
                             player_icons[17] = dice_icon
