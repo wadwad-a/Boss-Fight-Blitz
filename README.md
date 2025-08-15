@@ -52,12 +52,6 @@ Make sure this folder remains in the same location as `main.py`.
 
 ---
 
-## 🛠 Requirements
-- **Python 3.8+**
-- **Pygame** library
-
----
-
 ## 📃 Credits
 Driken Stan - "Retro select" via Pixabay
 Driken Stan - "Retro laser 1" via Pixabay
