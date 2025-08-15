@@ -4,7 +4,7 @@
 [![Pygame](https://img.shields.io/badge/pygame-2.6.1-green.svg)](https://www.pygame.org/news)
 
 Boss Battle Blitz is a fast-paced **arcade-style boss fight game** built with **Pygame**.  
-Choose your boss, dodge attacks, and unlock every single player by completing cryptic achievements
+Choose your boss, dodge attacks, and unlock every single player by completing cryptic achievements.
 
 ---
 
