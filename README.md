@@ -1,9 +1,9 @@
-# ⚔️ Boss Battle Blitz
+# ⚔️ Boss Fight Blitz
 
 [![Python](https://img.shields.io/badge/python-3.13.5-blue.svg)](https://www.python.org/)  
 [![Pygame](https://img.shields.io/badge/pygame-2.6.1-green.svg)](https://www.pygame.org/news)
 
-Boss Battle Blitz is a fast-paced **arcade-style boss fight game** built with **Pygame**.  
+Boss Fight Blitz is a fast-paced **arcade-style boss fight game** built with **Pygame**.  
 Choose your boss, dodge attacks, and unlock every single player by completing cryptic achievements.
 
 ---
@@ -21,8 +21,8 @@ Choose your boss, dodge attacks, and unlock every single player by completing cr
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/wadwad-a/boss-battle-blitz.git
-cd boss-battle-blitz
+git clone https://github.com/wadwad-a/boss-fight-blitz.git
+cd boss-fight-blitz
 ```
 ### 2. Install dependencies
 ```bash
