@@ -54,6 +54,7 @@ Make sure this folder remains in the same location as `main.py`.
 
 ## 📃 Credits
 Driken Stan - "Retro select" via Pixabay
+
 Driken Stan - "Retro laser 1" via Pixabay
 Driken Stan - "Retro blip 2" via Pixabay
 freesound_community - "Protego" via Pixabay
