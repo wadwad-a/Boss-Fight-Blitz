@@ -53,17 +53,16 @@ Make sure this folder remains in the same location as `main.py`.
 ---
 
 ## 📃 Credits
-Driken Stan - "Retro select" via Pixabay
-
-Driken Stan - "Retro laser 1" via Pixabay
-Driken Stan - "Retro blip 2" via Pixabay
-freesound_community - "Protego" via Pixabay
-freesound_community - "Chicken Single Alarm Call" via Pixabay
-Lumora Studios - "Pixel Explosion" via Pixabay
-yodguard - "Healing Magic (4)" via Pixabay
-Ribhav Agrawal - "heavy thunder sound effect - no copyright" via Pixabay
-sakuracloud - "Miffy cafe" via NoCopyrightSounds
-Extra Terra, Max Brhon - "Cyberblade" via NoCopyrightSounds
-The Clamps, Wiguez - "Marcheur (The Clamps Remix)" via NoCopyrightSounds
-AITUBO AI - "Stormcall" via AITUBO AI
-Piskel - platform for pixel art creation
+- Driken Stan - "Retro select" via Pixabay
+- Driken Stan - "Retro laser 1" via Pixabay
+- Driken Stan - "Retro blip 2" via Pixabay
+- freesound_community - "Protego" via Pixabay
+- freesound_community - "Chicken Single Alarm Call" via Pixabay
+- Lumora Studios - "Pixel Explosion" via Pixabay
+- yodguard - "Healing Magic (4)" via Pixabay
+- Ribhav Agrawal - "heavy thunder sound effect - no copyright" via Pixabay
+- sakuracloud - "Miffy cafe" via NoCopyrightSounds
+- Extra Terra, Max Brhon - "Cyberblade" via NoCopyrightSounds
+- The Clamps, Wiguez - "Marcheur (The Clamps Remix)" via NoCopyrightSounds
+- AITUBO AI - "Stormcall" via AITUBO AI
+- Piskel - platform for pixel art creation
