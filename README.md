@@ -28,15 +28,20 @@ cd boss-fight-blitz
 ```bash
 pip install pygame
 ```
-
----
-
-## ▶️ Running the Game
+### 3. Run the game
 ```bash
 python main.py
 ```
+or
+### 1. Click the Google Drive Link
+[Boss Fight Blitz](https://drive.google.com/file/d/1ShFyqkRZ6i1TvvrKSKomMPxVGLLlLnOi/view?usp=sharing)
+### 2. Download and Extract the .zip file
+Click the download button on Google Drive and make sure to extract all files when unzipping the .zip file.
+### 3. Run the game
+Double click the main.exe executable.
 
 ---
+
 
 ## 🎮 Controls
 | Key        | Action              |
